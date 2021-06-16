@@ -46,7 +46,7 @@ ___
 # Example
 
 ```python
-parse('insult')
+parse('insult', dictionary_index=0)
 
 --> {'insult': {'noun': {'UK IPA': ['/ˈɪn.sʌlt/'],
                          'US IPA': ['/ˈɪn.sʌlt/'],
