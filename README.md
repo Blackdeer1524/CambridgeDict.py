@@ -1,5 +1,12 @@
 # CambridgeDict.py
 Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/).
+
+* [x] basic support of english, american and business dictionaries 
+* [ ] currently doesn't support parsing phrasal verbs
+___
+# Requirements
+* requests
+* beautifulsoup4
 ___
 
 # Field explanation
