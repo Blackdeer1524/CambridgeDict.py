@@ -38,7 +38,7 @@ def tag_concatenation(tag_1, tag_2):
     return [tag_1] + [tag_2]
 
 
-def parse(word, headers=headers, exception_function=lambda: None, absence_function=lambda: None):
+def parse(word, headers=headers):
     link = f"https://dictionary.cambridge.org/dictionary/english/{word}"
     # will raise error if headers are None
     page = requests.get(link, headers=headers)
@@ -47,9 +47,9 @@ def parse(word, headers=headers, exception_function=lambda: None, absence_functi
     soup = bs4.BeautifulSoup(page.content, "html.parser")
     # Only english dictionary
     # word block which contains definitions for every POS.
-    main_block = soup.find("div", {'class': 'pr di superentry'})
+    primal_block = soup.find("div", {'class': 'pr di superentry'})
 
-    main_block = main_block.find_all("div", {"class": "pr entry-body__el"})
+    main_block = primal_block.find_all("div", {"class": "pr entry-body__el"})
     if len(main_block) != 0:
         for entity in main_block:
             header_block = entity.find("div", {"class": "pos-header dpos-h"})
