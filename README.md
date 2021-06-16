@@ -8,7 +8,7 @@ ___
 * domain - domain of usage of word
 * definitions - definitions of word for current part of speach
 * examples - sentence examples
-* labels and codes - [labels and codes given](https://dictionary.cambridge.org/help/codes.html) by Cambridge
+* labels and codes - [labels and codes](https://dictionary.cambridge.org/help/codes.html) given by Cambridge
 * level - english proficiency level
 * region - region where the current word is mostly used
 * usage - formal/informal/specialized
