@@ -10,7 +10,7 @@ ___
 * examples - sentence examples
 * labels and codes - [labels and codes](https://dictionary.cambridge.org/help/codes.html) given by Cambridge
 * level - english proficiency level
-* region - region where the current word is mostly used
+* region - region where the current word is mainly used
 * usage - formal/informal/specialized
 
 ___
