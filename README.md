@@ -1,26 +1,15 @@
 # CambridgeDict.py
 Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/).
 
-* [x] basic support of english, american and business dictionaries 
-* [ ] currently doesn't support parsing phrasal verbs
-___
+## Supports
+* [x] English, american and business dictionaries 
+* [x] Phrasal verbs
+* [x] Idioms
+
 # Requirements
 * requests
 * beautifulsoup4
-___
 
-# Field explanation
-
-* UK/US IPA - transcription for given word  
-* domain - domain of usage of word
-* definitions - definitions of word for current part of speach
-* examples - sentence examples
-* labels and codes - [labels and codes](https://dictionary.cambridge.org/help/codes.html) given by Cambridge
-* level - english proficiency level
-* region - region where the current word is mainly used
-* usage - formal/informal/specialized
-
-___
 # Return pattern
 ```python
 {word: {'noun': {'UK IPA': [noun_uk_ipa],
@@ -49,7 +38,6 @@ ___
                   
 }}}
 ```
-___
 # Example
 
 ```python
@@ -84,3 +72,15 @@ parse('insult', dictionary_index=0)
                          'region': [['']],
                          'usage': [['']]}}}
 ```
+* UK/US IPA - transcription for given word  
+* domain - domain of usage of word
+* definitions - definitions of word for current part of speach
+* examples - sentence examples
+* labels and codes - [labels and codes](https://dictionary.cambridge.org/help/codes.html) given by Cambridge
+* level - english proficiency level
+* region - region where the current word is mainly used
+* usage - formal/informal/specialized
+
+# Known issues
+Programm will raise error if:
+* The phrasal verb is on the same page as the same noun-word (for example, [`make up`](https://dictionary.cambridge.org/dictionary/english/make-up))
