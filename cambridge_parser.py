@@ -4,12 +4,15 @@ import bs4
 
 user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'
 headers = {'User-Agent': user_agent}
+dict_decoder = {0: "English",
+                1: "American",
+                2: "Business"}
 
 
 def get_labels(block):
     """
     :param block:  "span", {"class": "def-info ddef-info"}
-    :return: level, labels_and_codes, region, usage
+    :return: level, labels_and_codes, region, usage, domain
     """
     level = block.find("span", {"class": "epp-xref"})
     level = level.text if level is not None else ""
@@ -68,11 +71,112 @@ def get_phonetics(header_block, dictionary_index=0):
     return uk_ipa, us_ipa
 
 
+def find_phrasal_verb(soup, dictionary_index=0):
+    phrasal_idiom_word_info = {}
+    phrasal_main_block = soup.find_all("div", {"class": "entry"})
+    if len(phrasal_main_block) == 0:
+        idiom_main_block = soup.find("div", {"class": "idiom-block"})
+        parsed_word = idiom_main_block.find("h2", {"class": "headword"}).text
+        idiom_definition_found_1 = idiom_main_block.find("div", {"class": "ddef_h"})
+        if idiom_definition_found_1 is not None:
+            idiom_definition_found_2 = idiom_definition_found_1.find("div", {'class': "def ddef_d db"})
+        else:
+            idiom_definition_found_2 = None
+        idiom_definition = "" if idiom_definition_found_2 is None else idiom_definition_found_2.text
+
+        def_block = idiom_main_block.find("span", {"class": "idiom-body didiom-body"})
+
+        # sentence examples
+        sentence_block_list = def_block.find("div", {"class": "def-body ddef_b"})
+        sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
+            "div",
+            {"class": "examp dexamp"})
+        idiom_sentences = []
+        if len(sentence_block_list) != 0:
+            for item in sentence_block_list:
+                sent_ex = item.text.strip()
+                idiom_sentences.append(sent_ex)
+        phrasal_idiom_word_info[parsed_word] = {}
+        phrasal_idiom_word_info[parsed_word]["idiom"] = {"definitions": [idiom_definition], "examples": [idiom_sentences],
+                                                   "level": [""],
+                                                   "labels_and_codes": [""],
+                                                   "region": [""],
+                                                   "usage": [""],
+                                                   "domain": [""],
+                                                   "UK IPA": [""],
+                                                   "US IPA": [""]}
+        return phrasal_idiom_word_info
+    else:
+        if len(phrasal_main_block) < dictionary_index + 1:
+            raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
+        phrasal_main_block = phrasal_main_block[dictionary_index]
+        phrasal_header_block = phrasal_main_block.find("div", {"class": "pos-header dpos-h"})
+        uk_ipa, us_ipa = get_phonetics(phrasal_header_block, dictionary_index)
+        pos = phrasal_header_block.find("span", {"class": "pos dpos"}).text
+        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(phrasal_header_block)
+        parsed_word = phrasal_main_block.find("h2", {"class": "headword tw-bw dhw dpos-h_hw"}).text
+
+        for def_block in phrasal_main_block.find_all("div", {"class": "sense-body dsense_b"}):
+            phrasal_definition_found_1 = def_block.find("div", {"class": "ddef_h"})
+            if phrasal_definition_found_1 is not None:
+                tags_section = phrasal_definition_found_1.find("span", {"class": "def-info ddef-info"})
+
+                # Gathering specific tags for every word usage
+                level, labels_and_codes, region, usage, domain = get_labels(tags_section)
+                current_word_level = tag_concatenation(m_level, level)
+                current_word_labels_and_codes = tag_concatenation(m_labels_and_codes, labels_and_codes)
+                current_word_region = tag_concatenation(m_region, region)
+                current_word_usage = tag_concatenation(m_usage, usage)
+                current_word_domain = tag_concatenation(m_domain, domain)
+
+                phrasal_definition_found_2 = phrasal_definition_found_1.find("div", {'class': "def ddef_d db"})
+            else:
+                phrasal_definition_found_2 = None
+
+            phrasal_definition = "" if phrasal_definition_found_2 is None else phrasal_definition_found_2.text
+
+            # sentence examples
+            sentence_block_list = def_block.find("div", {"class": "def-body ddef_b"})
+            sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
+                "div",
+                {"class": "examp dexamp"})
+            phrasal_sentences = []
+
+            if len(sentence_block_list) != 0:
+                for item in sentence_block_list:
+                    sent_ex = item.text.strip()
+                    phrasal_sentences.append(sent_ex)
+
+            if phrasal_idiom_word_info.get(parsed_word) is None or phrasal_idiom_word_info[parsed_word].get(pos) is None:
+                if phrasal_idiom_word_info.get(parsed_word) is None:
+                    phrasal_idiom_word_info[parsed_word] = {}
+                phrasal_idiom_word_info[parsed_word][pos] = {"definitions": [phrasal_definition], "examples": [phrasal_sentences],
+                                               "level": [current_word_level],
+                                               "labels_and_codes": [current_word_labels_and_codes],
+                                               "region": [current_word_region],
+                                               "usage": [current_word_usage],
+                                               "domain": [current_word_domain],
+                                               "UK IPA": uk_ipa,
+                                               "US IPA": us_ipa}
+            else:
+                phrasal_idiom_word_info[parsed_word][pos]["definitions"].append(phrasal_definition)
+                phrasal_idiom_word_info[parsed_word][pos]["examples"].append(phrasal_sentences)
+                phrasal_idiom_word_info[parsed_word][pos]["level"].append(current_word_level)
+                phrasal_idiom_word_info[parsed_word][pos]["labels_and_codes"].append(current_word_labels_and_codes)
+                phrasal_idiom_word_info[parsed_word][pos]["region"].append(current_word_region)
+                phrasal_idiom_word_info[parsed_word][pos]["usage"].append(current_word_usage)
+                phrasal_idiom_word_info[parsed_word][pos]["domain"].append(current_word_domain)
+    return phrasal_idiom_word_info
+
+
 def parse(word, dictionary_index=0, headers=headers):
     """
-    :param word:
-    :param headers:
-    :param dictionary_index: 0 - eng, 1 - us, 2 - business
+    :param word: word to be parsed
+    :param headers: request headers
+    :param dictionary_index:
+        * 0 - English dictionary (Also used to search Idioms);
+        * 1 - American dictionary;
+        * 2 - Business dictionary
     :return:
     """
     link = f"https://dictionary.cambridge.org/dictionary/english/{word}"
@@ -87,7 +191,7 @@ def parse(word, dictionary_index=0, headers=headers):
     if len(primal_block) >= dictionary_index + 1:
         main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
     else:
-        return {"error": f"Business dictionary doesn't contain word {word}"}
+        raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
 
     for entity in main_block:
         header_block = entity.find("div", {"class": "pos-header dpos-h"})
@@ -124,8 +228,7 @@ def parse(word, dictionary_index=0, headers=headers):
                                                         {"class": "phrase-title dphrase-title"}).text
                     else:
                         phrase_block_2 = definition_found_1.find_parent("div",
-                                                                     {
-                                                                         "class": "pr phrase-block dphrase-block lmb-25"})
+                                                                     {"class": "pr phrase-block dphrase-block lmb-25"})
                         if phrase_block_2 is not None:
                             parsed_word = phrase_block_2.find("span",
                                                               {"class": "phrase-title dphrase-title"}).text
@@ -169,4 +272,6 @@ def parse(word, dictionary_index=0, headers=headers):
                     word_info[parsed_word][pos]["region"].append(current_word_region)
                     word_info[parsed_word][pos]["usage"].append(current_word_usage)
                     word_info[parsed_word][pos]["domain"].append(current_word_domain)
+    if len(word_info) == 0:
+        word_info = find_phrasal_verb(soup, dictionary_index)
     return word_info
