@@ -13,6 +13,11 @@ def get_labels(block):
     """
     :param block:  "span", {"class": "def-info ddef-info"}
     :return: level, labels_and_codes, region, usage, domain
+    level - english proficiency level
+    labels and codes - labels and codes given by Cambridge
+    region - region where the current word is mainly used
+    usage - formal/informal/specialized
+    domain - domain of usage of word
     """
     level = block.find("span", {"class": "epp-xref"})
     level = level.text if level is not None else ""
@@ -42,6 +47,14 @@ def tag_concatenation(tag_1, tag_2):
 
 
 def get_phonetics(header_block, dictionary_index=0):
+    """
+    :param header_block: header block from the page
+    :param dictionary_index:
+        * 0 - English dictionary (Also used to search Idioms);
+        * 1 - American dictionary;
+        * 2 - Business dictionary
+    :return: uk_ipa, us_ipa - transcription for given word
+    """
     uk_ipa = [""]
     us_ipa = [""]
     if dictionary_index % 2 == 0:
@@ -71,10 +84,21 @@ def get_phonetics(header_block, dictionary_index=0):
     return uk_ipa, us_ipa
 
 
-def find_phrasal_verb(word, soup, dictionary_index=0):
+def find_phrasal(word, soup, dictionary_index=0):
+    """
+    :param word: word to be parse
+    :param soup: bs4 soup of the page
+    :param dictionary_index:
+        * 0 - English dictionary (Also used to search Idioms);
+        * 1 - American dictionary;
+        * 2 - Business dictionary
+    :return: parsed info about phrasal verb / idiom found
+    """
     phrasal_idiom_word_info = {}
     phrasal_main_block = soup.find_all("div", {"class": "entry"})
+    # if it's not just a word, then current query is either phrasal verb, or idiom
     if len(phrasal_main_block) == 0:
+        # idiom parsing
         idiom_main_block = soup.find("div", {"class": "idiom-block"})
         parsed_word = idiom_main_block.find("h2", {"class": "headword"}).text
         idiom_definition_found_1 = idiom_main_block.find("div", {"class": "ddef_h"})
@@ -107,6 +131,7 @@ def find_phrasal_verb(word, soup, dictionary_index=0):
                                                    "US IPA": [""]}
         return phrasal_idiom_word_info
     else:
+        # phrasal verb parsing
         if len(phrasal_main_block) < dictionary_index + 1:
             raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
         phrasal_main_block = phrasal_main_block[dictionary_index]
@@ -280,6 +305,6 @@ def parse(word, dictionary_index=0, headers=headers):
                     word_info[parsed_word][pos]["usage"].append(current_word_usage)
                     word_info[parsed_word][pos]["domain"].append(current_word_domain)
 
-    phrasal_word_info = find_phrasal_verb(word, soup, dictionary_index)
+    phrasal_word_info = find_phrasal(word, soup, dictionary_index)
     word_info.update(phrasal_word_info)
     return word_info
