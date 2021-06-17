@@ -71,7 +71,7 @@ def get_phonetics(header_block, dictionary_index=0):
     return uk_ipa, us_ipa
 
 
-def find_phrasal_verb(soup, dictionary_index=0):
+def find_phrasal_verb(word, soup, dictionary_index=0):
     phrasal_idiom_word_info = {}
     phrasal_main_block = soup.find_all("div", {"class": "entry"})
     if len(phrasal_main_block) == 0:
@@ -112,7 +112,10 @@ def find_phrasal_verb(soup, dictionary_index=0):
         phrasal_main_block = phrasal_main_block[dictionary_index]
         phrasal_header_block = phrasal_main_block.find("div", {"class": "pos-header dpos-h"})
         uk_ipa, us_ipa = get_phonetics(phrasal_header_block, dictionary_index)
-        pos = phrasal_header_block.find("span", {"class": "pos dpos"}).text
+
+        pos_block = phrasal_header_block.find("span", {"class": "pos dpos"})
+        pos = "" if pos_block is None else pos_block.text
+
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(phrasal_header_block)
         parsed_word = phrasal_main_block.find("h2", {"class": "headword tw-bw dhw dpos-h_hw"}).text
 
@@ -199,7 +202,8 @@ def parse(word, dictionary_index=0, headers=headers):
 
         uk_ipa, us_ipa = get_phonetics(header_block, dictionary_index)
 
-        pos = header_block.find("span", {"class": "pos dpos"}).text
+        pos_block = header_block.find("span", {"class": "pos dpos"})
+        pos = "" if pos_block is None else pos_block.text
         # data gathered from the word header
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(header_block)
 
@@ -273,5 +277,5 @@ def parse(word, dictionary_index=0, headers=headers):
                     word_info[parsed_word][pos]["usage"].append(current_word_usage)
                     word_info[parsed_word][pos]["domain"].append(current_word_domain)
     if len(word_info) == 0:
-        word_info = find_phrasal_verb(soup, dictionary_index)
+        word_info = find_phrasal_verb(word, soup, dictionary_index)
     return word_info
