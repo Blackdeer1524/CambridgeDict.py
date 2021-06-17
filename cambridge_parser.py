@@ -117,8 +117,11 @@ def find_phrasal_verb(word, soup, dictionary_index=0):
         pos = "" if pos_block is None else pos_block.text
 
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(phrasal_header_block)
-        parsed_word = phrasal_main_block.find("h2", {"class": "headword tw-bw dhw dpos-h_hw"}).text
-
+        parsed_word_block = phrasal_main_block.find("h2", {"class": "headword tw-bw dhw dpos-h_hw"})
+        if parsed_word_block is None:
+            return {}
+        else:
+            parsed_word = parsed_word_block.text
         for def_block in phrasal_main_block.find_all("div", {"class": "sense-body dsense_b"}):
             phrasal_definition_found_1 = def_block.find("div", {"class": "ddef_h"})
             if phrasal_definition_found_1 is not None:
@@ -276,6 +279,7 @@ def parse(word, dictionary_index=0, headers=headers):
                     word_info[parsed_word][pos]["region"].append(current_word_region)
                     word_info[parsed_word][pos]["usage"].append(current_word_usage)
                     word_info[parsed_word][pos]["domain"].append(current_word_domain)
-    if len(word_info) == 0:
-        word_info = find_phrasal_verb(word, soup, dictionary_index)
+
+    phrasal_word_info = find_phrasal_verb(word, soup, dictionary_index)
+    word_info.update(phrasal_word_info)
     return word_info
