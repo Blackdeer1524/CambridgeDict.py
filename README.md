@@ -80,7 +80,3 @@ parse('insult', dictionary_index=0)
 * level - english proficiency level
 * region - region where the current word is mainly used
 * usage - formal/informal/specialized
-
-# Known issues
-Programm will raise error if:
-* The phrasal verb is on the same page as the same noun-word (for example, [`make up`](https://dictionary.cambridge.org/dictionary/english/make-up))
