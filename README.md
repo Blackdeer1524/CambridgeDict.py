@@ -79,4 +79,4 @@ parse('insult', dictionary_index=0)
 * labels and codes - [labels and codes](https://dictionary.cambridge.org/help/codes.html) given by Cambridge
 * level - english proficiency level
 * region - region where the current word is mainly used
-* usage - formal/informal/specialized
+* usage - when the usage of word is appropriate
