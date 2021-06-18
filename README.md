@@ -15,25 +15,25 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 {word: {'noun': {'UK IPA': [noun_uk_ipa],
                  'US IPA': [noun_us_ipa],
                  'definitions': [definiton_1, ..., definition_N],
-                 'domain': [[domains_1, ..., domains_N],
+                 'domain': [[domains_1], ..., [domains_N]],
                  'examples': [[1-st sentence example for the 1-st def, ..., N-th sentence example for the 1-st def],
                               ...
                               [1-st sentence example for the N-th def, ..., N-th sentence example for the N-th def]],
                  'labels_and_codes': [labels_and_codes_1, ..., labels_and_codes_N],
-                 'level': [level_1, ..., level_N],
-                 'region': [region_1, ..., region_N],
-                 'usage': [usage_1, ..., usage_N]},
+                 'level': [[level_1], ..., [level_N]],
+                 'region': [[region_1], ..., [region_N]],
+                 'usage': [[usage_1], ..., [usage_N]]},
        {'verb': {'UK IPA': [verb_uk_ipa],
                  'US IPA': [verb_us_ipa],
                  'definitions': [definiton_1, ..., definition_N],
-                 'domain': [[domains_1, ..., domains_N],
+                 'domain': [[domains_1], ..., [domains_N]],
                  'examples': [[1-st sentence example for the 1-st def, ..., N-th sentence example for the 1-st def],
                               ...
                               [1-st sentence example for the N-th def, ..., N-th sentence example for the N-th def]],
                  'labels_and_codes': [labels_and_codes_1, ..., labels_and_codes_N],
-                 'level': [level_1, ..., level_N],
-                 'region': [region_1, ..., region_N],
-                 'usage': [usage_1, ..., usage_N]},
+                 'level': [[level_1], ..., [level_N]],
+                 'region': [[region_1], ..., [region_N]],
+                 'usage': [[usage_1], ..., [usage_N]]},
        ...
                   
 }}}
