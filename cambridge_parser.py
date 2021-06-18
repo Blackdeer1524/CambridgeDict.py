@@ -122,11 +122,11 @@ def find_phrasal(word, soup, dictionary_index=0):
                 idiom_sentences.append(sent_ex)
         phrasal_idiom_word_info[parsed_word] = {}
         phrasal_idiom_word_info[parsed_word]["idiom"] = {"definitions": [idiom_definition], "examples": [idiom_sentences],
-                                                   "level": [""],
-                                                   "labels_and_codes": [""],
-                                                   "region": [""],
-                                                   "usage": [""],
-                                                   "domain": [""],
+                                                   "level": [[""]],
+                                                   "labels_and_codes": [[""]],
+                                                   "region": [[""]],
+                                                   "usage": [[""]],
+                                                   "domain": [[""]],
                                                    "UK IPA": [""],
                                                    "US IPA": [""]}
         return phrasal_idiom_word_info
