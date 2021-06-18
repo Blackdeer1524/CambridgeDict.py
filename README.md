@@ -1,6 +1,7 @@
 # CambridgeDict.py
 Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/).
 
+*This library and its author(s) are not affiliated/associated with the Cambridge dictionary in any way.*
 # Supports
 * [x] English, american and business dictionaries 
 * [x] Phrasal verbs
