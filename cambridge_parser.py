@@ -9,7 +9,7 @@ dict_decoder = {0: "English",
                 2: "Business"}
 
 
-def get_labels(block):
+def get_tags(block) -> [list, list, list, list, list]:
     """
     :param block:  "span", {"class": "def-info ddef-info"}
     :return: level, labels_and_codes, region, usage, domain
@@ -19,31 +19,32 @@ def get_labels(block):
     usage - formal/informal/specialized
     domain - domain of usage of word
     """
-    level = block.find("span", {"class": "epp-xref"})
-    level = level.text if level is not None else ""
+    def find_all_tags(html_tag: str, params: dict) -> list:
+        found_tags = block.find_all(html_tag, params)
+        tags = []
+        for tag in found_tags:
+            tag = tag.text if tag is not None else ""
+            tags.append(tag)
+        if not tags:
+            return [""]
+        return tags
 
-    labels_and_codes = block.find("span", {"class": "gram dgram"})
-    labels_and_codes = labels_and_codes.text if labels_and_codes is not None else ""
-
-    region = block.find("span", {"class": "region dregion"})
-    region = region.text if region is not None else ""
-
-    usage = block.find("span", {"class": "usage dusage"})
-    usage = usage.text if usage is not None else ""
-
-    domain = block.find("span", {"class": "domain ddomain"})
-    domain = domain.text if domain is not None else ""
+    level = find_all_tags("span", {"class": "epp-xref"})
+    labels_and_codes = find_all_tags("span", {"class": "gram dgram"})
+    region = find_all_tags("span", {"class": "region dregion"})
+    usage = find_all_tags("span", {"class": "usage dusage"})
+    domain = find_all_tags("span", {"class": "domain ddomain"})
     return level, labels_and_codes, region, usage, domain
 
 
 def tag_concatenation(tag_1, tag_2):
-    if tag_1 == "" and tag_2 == "":
+    if tag_1 == [""] and tag_2 == [""]:
         return [""]
-    if tag_1 == "":
-        return [tag_2]
-    if tag_2 == "":
-        return [tag_1]
-    return [tag_1] + [tag_2]
+    if tag_1 == [""]:
+        return tag_2
+    if tag_2 == [""]:
+        return tag_1
+    return tag_1 + tag_2
 
 
 def get_phonetics(header_block, dictionary_index=0):
@@ -57,7 +58,7 @@ def get_phonetics(header_block, dictionary_index=0):
     """
     uk_ipa = [""]
     us_ipa = [""]
-    if dictionary_index % 2 == 0:
+    if dictionary_index == 0:
         flag = 0
         # Not so beautiful, but working solution for obtaining IPA
         ipa = header_block.find_all("span", {"class": "pron dpron"})
@@ -80,7 +81,8 @@ def get_phonetics(header_block, dictionary_index=0):
     else:
         # Cambridge has different ways of adding IPA to american and english dictionaries
         uk_ipa = [""]
-        us_ipa = [header_block.find("span", {"class": "pron dpron"}).text]
+        us_ipa_block = header_block.find("span", {"class": "pron dpron"})
+        us_ipa = [us_ipa_block.text] if us_ipa_block is not None else [""]
     return uk_ipa, us_ipa
 
 
@@ -141,7 +143,7 @@ def find_phrasal(word, soup, dictionary_index=0):
         pos_block = phrasal_header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text
 
-        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(phrasal_header_block)
+        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(phrasal_header_block)
         parsed_word_block = phrasal_main_block.find("h2", {"class": "headword"})  # tw-bw dhw dpos-h_hw
         if parsed_word_block is None:
             return {}
@@ -153,7 +155,7 @@ def find_phrasal(word, soup, dictionary_index=0):
                 tags_section = phrasal_definition_found_1.find("span", {"class": "def-info ddef-info"})
 
                 # Gathering specific tags for every word usage
-                level, labels_and_codes, region, usage, domain = get_labels(tags_section)
+                level, labels_and_codes, region, usage, domain = get_tags(tags_section)
                 current_word_level = tag_concatenation(m_level, level)
                 current_word_labels_and_codes = tag_concatenation(m_labels_and_codes, labels_and_codes)
                 current_word_region = tag_concatenation(m_region, region)
@@ -233,7 +235,7 @@ def parse(word, dictionary_index=0, headers=headers):
         pos_block = header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text
         # data gathered from the word header
-        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(header_block)
+        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_block)
 
         def_block_list = entity.find_all("div", {'class': 'def-block ddef_block'})
         if len(def_block_list) != 0:
@@ -243,7 +245,7 @@ def parse(word, dictionary_index=0, headers=headers):
                     tags_section = definition_found_1.find("span", {"class": "def-info ddef-info"})
 
                     # Gathering specific tags for every word usage
-                    level, labels_and_codes, region, usage, domain = get_labels(tags_section)
+                    level, labels_and_codes, region, usage, domain = get_tags(tags_section)
                     current_word_level = tag_concatenation(m_level, level)
                     current_word_labels_and_codes = tag_concatenation(m_labels_and_codes, labels_and_codes)
                     current_word_region = tag_concatenation(m_region, region)
