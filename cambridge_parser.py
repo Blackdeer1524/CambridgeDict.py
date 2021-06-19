@@ -142,7 +142,7 @@ def find_phrasal(word, soup, dictionary_index=0):
         pos = "" if pos_block is None else pos_block.text
 
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_labels(phrasal_header_block)
-        parsed_word_block = phrasal_main_block.find("h2", {"class": "headword tw-bw dhw dpos-h_hw"})
+        parsed_word_block = phrasal_main_block.find("h2", {"class": "headword"})  # tw-bw dhw dpos-h_hw
         if parsed_word_block is None:
             return {}
         else:
