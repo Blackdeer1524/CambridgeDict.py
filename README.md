@@ -15,7 +15,7 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 ```python
 {word: {'noun': {'UK IPA': [noun_uk_ipa],
                  'US IPA': [noun_us_ipa],
-                 'definitions': [definiton_1, ..., definition_N],
+                 'definitions': [definition_1, ..., definition_N],
                  'domain': [[domains_1], ..., [domains_N]],
                  'examples': [[1-st sentence example for the 1-st def, ..., N-th sentence example for the 1-st def],
                               ...
@@ -26,7 +26,7 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
                  'usage': [[usage_1], ..., [usage_N]]},
        {'verb': {'UK IPA': [verb_uk_ipa],
                  'US IPA': [verb_us_ipa],
-                 'definitions': [definiton_1, ..., definition_N],
+                 'definitions': [definition_1, ..., definition_N],
                  'domain': [[domains_1], ..., [domains_N]],
                  'examples': [[1-st sentence example for the 1-st def, ..., N-th sentence example for the 1-st def],
                               ...
