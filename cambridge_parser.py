@@ -31,8 +31,26 @@ def get_tags(block) -> [list, list, list, list, list]:
 
     level = find_all_tags("span", {"class": "epp-xref"})
     labels_and_codes = find_all_tags("span", {"class": "gram dgram"})
-    region = find_all_tags("span", {"class": "region dregion"})
-    usage = find_all_tags("span", {"class": "usage dusage"})
+    region = block.find("span", {"class": "lab dlab"})
+    if region is not None:
+        region = region.find("span", {"class": "region dregion"}, "")
+        region = [region.text] if region is not None else [""]
+    else:
+        region = [""]
+    usage = []
+    use_block = block.find_all("span", {"class": "lab dlab"}, [])
+    for use in use_block:
+        use_parent = use.parent.get("class")
+        if not any("var" in x for x in use_parent):
+            text_block = use.find_all("span", {"class": "usage dusage"}, [])
+            for text in text_block:
+                string = text.text
+                if " " in string:
+                    usage.extend(string.split(sep=" "))
+                else:
+                    usage.append(string)
+    if not usage:
+        usage.append("")
     domain = find_all_tags("span", {"class": "domain ddomain"})
     return level, labels_and_codes, region, usage, domain
 
@@ -310,3 +328,8 @@ def parse(word, dictionary_index=0, headers=headers):
     phrasal_word_info = find_phrasal(word, soup, dictionary_index)
     word_info.update(phrasal_word_info)
     return word_info
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+    pprint(parse("fledgling"))
