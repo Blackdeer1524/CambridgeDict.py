@@ -45,10 +45,7 @@ def get_tags(block) -> [list, list, list, list, list]:
             text_block = use.find_all("span", {"class": "usage dusage"}, [])
             for text in text_block:
                 string = text.text
-                if " " in string:
-                    usage.extend(string.split(sep=" "))
-                else:
-                    usage.append(string)
+                usage.append(string)
     if not usage:
         usage.append("")
     domain = find_all_tags("span", {"class": "domain ddomain"})
