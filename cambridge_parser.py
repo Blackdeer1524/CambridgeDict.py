@@ -73,6 +73,29 @@ def get_phonetics(header_block, dictionary_index=0):
     """
     uk_ipa = [""]
     us_ipa = [""]
+    uk_audio_link = ""
+    us_audio_link = ""
+    link_prefix = "https://dictionary.cambridge.org"
+
+    audio_block = header_block.find_all("span", {"class": "daud"})
+    for daud in audio_block:
+        parent_class = [item.lower().strip() for item in daud.parent.get("class")]
+        audio_region = ""
+        if "uk" in parent_class:
+            audio_region = "uk"
+        elif "us" in parent_class:
+            audio_region = "us"
+        audio_source = daud.find("source")
+        if audio_source is not None:
+            audio_source_link = audio_source.get("src", "")
+        else:
+            audio_source_link = ""
+        result_audio_link = f"{link_prefix}/{audio_source_link}" if audio_source_link else ""
+        if audio_region == "uk":
+            uk_audio_link = result_audio_link
+        elif audio_region == "us":
+            us_audio_link = result_audio_link
+
     if dictionary_index == 0:
         flag = 0
         # Not so beautiful, but working solution for obtaining IPA
@@ -98,7 +121,7 @@ def get_phonetics(header_block, dictionary_index=0):
         uk_ipa = [""]
         us_ipa_block = header_block.find("span", {"class": "pron dpron"})
         us_ipa = [us_ipa_block.text] if us_ipa_block is not None else [""]
-    return uk_ipa, us_ipa
+    return uk_ipa, us_ipa, uk_audio_link, us_audio_link
 
 
 def find_phrasal(word, soup, dictionary_index=0):
@@ -123,7 +146,9 @@ def find_phrasal(word, soup, dictionary_index=0):
             idiom_definition_found_2 = idiom_definition_found_1.find("div", {'class': "def ddef_d db"})
         else:
             idiom_definition_found_2 = None
-        idiom_definition = "" if idiom_definition_found_2 is None else idiom_definition_found_2.text
+        idiom_definition = "" if idiom_definition_found_2 is None else idiom_definition_found_2.text.strip()
+        if idiom_definition.endswith(":"):
+            idiom_definition = idiom_definition[:-1]
 
         def_block = idiom_main_block.find("span", {"class": "idiom-body didiom-body"})
 
@@ -138,14 +163,15 @@ def find_phrasal(word, soup, dictionary_index=0):
                 sent_ex = item.text.strip()
                 idiom_sentences.append(sent_ex)
         phrasal_idiom_word_info[parsed_word] = {}
-        phrasal_idiom_word_info[parsed_word]["idiom"] = {"definitions": [idiom_definition], "examples": [idiom_sentences],
-                                                   "level": [[""]],
-                                                   "labels_and_codes": [[""]],
-                                                   "region": [[""]],
-                                                   "usage": [[""]],
-                                                   "domain": [[""]],
-                                                   "UK IPA": [""],
-                                                   "US IPA": [""]}
+        phrasal_idiom_word_info[parsed_word]["idiom"] = {"definitions": [idiom_definition],
+                                                         "examples": [idiom_sentences],
+                                                         "level": [[""]],
+                                                         "labels_and_codes": [[""]],
+                                                         "region": [[""]],
+                                                         "usage": [[""]],
+                                                         "domain": [[""]],
+                                                         "UK IPA": [""],
+                                                         "US IPA": [""]}
         return phrasal_idiom_word_info
     else:
         # phrasal verb parsing
@@ -153,7 +179,7 @@ def find_phrasal(word, soup, dictionary_index=0):
             raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
         phrasal_main_block = phrasal_main_block[dictionary_index]
         phrasal_header_block = phrasal_main_block.find("div", {"class": "pos-header dpos-h"})
-        uk_ipa, us_ipa = get_phonetics(phrasal_header_block, dictionary_index)
+        uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(phrasal_header_block, dictionary_index)
 
         pos_block = phrasal_header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text
@@ -181,7 +207,9 @@ def find_phrasal(word, soup, dictionary_index=0):
             else:
                 phrasal_definition_found_2 = None
 
-            phrasal_definition = "" if phrasal_definition_found_2 is None else phrasal_definition_found_2.text
+            phrasal_definition = "" if phrasal_definition_found_2 is None else phrasal_definition_found_2.text.strip()
+            if phrasal_definition.endswith(":"):
+                phrasal_definition = phrasal_definition[:-1]
 
             # sentence examples
             sentence_block_list = def_block.find("div", {"class": "def-body ddef_b"})
@@ -198,14 +226,17 @@ def find_phrasal(word, soup, dictionary_index=0):
             if phrasal_idiom_word_info.get(parsed_word) is None or phrasal_idiom_word_info[parsed_word].get(pos) is None:
                 if phrasal_idiom_word_info.get(parsed_word) is None:
                     phrasal_idiom_word_info[parsed_word] = {}
-                phrasal_idiom_word_info[parsed_word][pos] = {"definitions": [phrasal_definition], "examples": [phrasal_sentences],
-                                               "level": [current_word_level],
-                                               "labels_and_codes": [current_word_labels_and_codes],
-                                               "region": [current_word_region],
-                                               "usage": [current_word_usage],
-                                               "domain": [current_word_domain],
-                                               "UK IPA": uk_ipa,
-                                               "US IPA": us_ipa}
+                phrasal_idiom_word_info[parsed_word][pos] = {"definitions": [phrasal_definition],
+                                                             "examples": [phrasal_sentences],
+                                                             "level": [current_word_level],
+                                                             "labels_and_codes": [current_word_labels_and_codes],
+                                                             "region": [current_word_region],
+                                                             "usage": [current_word_usage],
+                                                             "domain": [current_word_domain],
+                                                             "UK_IPA": uk_ipa,
+                                                             "US_IPA": us_ipa,
+                                                             "UK_audio_link": uk_audio_link,
+                                                             "US_audio_link": us_audio_link}
             else:
                 phrasal_idiom_word_info[parsed_word][pos]["definitions"].append(phrasal_definition)
                 phrasal_idiom_word_info[parsed_word][pos]["examples"].append(phrasal_sentences)
@@ -245,7 +276,7 @@ def parse(word, dictionary_index=0, headers=headers):
         header_block = entity.find("div", {"class": "pos-header dpos-h"})
         parsed_word_block = header_block.find("span", {"class": "hw dhw"})
 
-        uk_ipa, us_ipa = get_phonetics(header_block, dictionary_index)
+        uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(header_block, dictionary_index)
 
         pos_block = header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text
@@ -270,7 +301,7 @@ def parse(word, dictionary_index=0, headers=headers):
                     # Phrase-block checking
                     # The reason for this is that on website there are two different tags for phrase-blocks
                     phrase_block = definition_found_1.find_parent("div",
-                                                               {"class": "pr phrase-block dphrase-block"})
+                                                                  {"class": "pr phrase-block dphrase-block"})
 
                     if phrase_block is not None:
                         parsed_word = phrase_block.find("span",
@@ -288,8 +319,9 @@ def parse(word, dictionary_index=0, headers=headers):
                 else:
                     definition_found_2 = None
 
-                definition = "" if definition_found_2 is None else definition_found_2.text
-
+                definition = "" if definition_found_2 is None else definition_found_2.text.strip()
+                if definition.endswith(":"):
+                    definition = definition[:-1]
                 # sentence examples
                 sentence_block_list = def_block.find("div", {"class": "def-body ddef_b"})
                 sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
@@ -311,8 +343,10 @@ def parse(word, dictionary_index=0, headers=headers):
                                               "region": [current_word_region],
                                               "usage": [current_word_usage],
                                               "domain": [current_word_domain],
-                                              "UK IPA": uk_ipa,
-                                              "US IPA": us_ipa}
+                                              "UK_IPA": uk_ipa,
+                                              "US_IPA": us_ipa,
+                                              "UK_audio_link": uk_audio_link,
+                                              "US_audio_link": us_audio_link}
                 else:
                     word_info[parsed_word][pos]["definitions"].append(definition)
                     word_info[parsed_word][pos]["examples"].append(sentences)
@@ -329,4 +363,4 @@ def parse(word, dictionary_index=0, headers=headers):
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(parse("fledgling"))
+    pprint(parse("make"))
