@@ -7,6 +7,7 @@ headers = {'User-Agent': user_agent}
 dict_decoder = {0: "English",
                 1: "American",
                 2: "Business"}
+link_prefix = "https://dictionary.cambridge.org"
 
 
 def get_tags(block) -> [list, list, list, list, list]:
@@ -75,25 +76,20 @@ def get_phonetics(header_block, dictionary_index=0):
     us_ipa = [""]
     uk_audio_link = ""
     us_audio_link = ""
-    link_prefix = "https://dictionary.cambridge.org"
 
     audio_block = header_block.find_all("span", {"class": "daud"})
     for daud in audio_block:
-        parent_class = [item.lower().strip() for item in daud.parent.get("class")]
-        audio_region = ""
-        if "uk" in parent_class:
-            audio_region = "uk"
-        elif "us" in parent_class:
-            audio_region = "us"
+        parent_class = [item.strip().lower() for item in daud.parent.get("class")]
         audio_source = daud.find("source")
         if audio_source is not None:
             audio_source_link = audio_source.get("src", "")
         else:
             audio_source_link = ""
+
         result_audio_link = f"{link_prefix}/{audio_source_link}" if audio_source_link else ""
-        if audio_region == "uk":
+        if "uk" in parent_class:
             uk_audio_link = result_audio_link
-        elif audio_region == "us":
+        elif "us" in parent_class:
             us_audio_link = result_audio_link
 
     if dictionary_index == 0:
@@ -260,7 +256,7 @@ def parse(word, dictionary_index=0, headers=headers):
     """
     link = f"https://dictionary.cambridge.org/dictionary/english/{word}"
     # will raise error if headers are None
-    page = requests.get(link, headers=headers)
+    page = requests.get(link, headers=headers, timeout=5)
     word_info = {}
 
     soup = bs4.BeautifulSoup(page.content, "html.parser")
@@ -276,16 +272,24 @@ def parse(word, dictionary_index=0, headers=headers):
         header_block = entity.find("div", {"class": "pos-header dpos-h"})
         parsed_word_block = header_block.find("span", {"class": "hw dhw"})
 
-        uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(header_block, dictionary_index)
-
         pos_block = header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text
+
+        uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(header_block, dictionary_index)
+
         # data gathered from the word header
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_block)
 
         def_block_list = entity.find_all("div", {'class': 'def-block ddef_block'})
         if len(def_block_list) != 0:
             for def_block in def_block_list:
+                image_section = def_block.find("div", {"class": "dimg"})
+                image_link = ""
+                if image_section is not None:
+                    image_link_block = image_section.find("amp-img")
+                    if image_link_block is not None:
+                        image_link = link_prefix + image_link_block.get("src", "")
+
                 definition_found_1 = def_block.find("div", {"class": "ddef_h"})
                 if definition_found_1 is not None:
                     tags_section = definition_found_1.find("span", {"class": "def-info ddef-info"})
@@ -343,6 +347,7 @@ def parse(word, dictionary_index=0, headers=headers):
                                               "region": [current_word_region],
                                               "usage": [current_word_usage],
                                               "domain": [current_word_domain],
+                                              "images": [image_link],
                                               "UK_IPA": uk_ipa,
                                               "US_IPA": us_ipa,
                                               "UK_audio_link": uk_audio_link,
@@ -355,6 +360,7 @@ def parse(word, dictionary_index=0, headers=headers):
                     word_info[parsed_word][pos]["region"].append(current_word_region)
                     word_info[parsed_word][pos]["usage"].append(current_word_usage)
                     word_info[parsed_word][pos]["domain"].append(current_word_domain)
+                    word_info[parsed_word][pos]["images"].append(image_link)
 
     phrasal_word_info = find_phrasal(word, soup, dictionary_index)
     word_info.update(phrasal_word_info)
@@ -363,4 +369,4 @@ def parse(word, dictionary_index=0, headers=headers):
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(parse("make"))
+    pprint(parse("sunshade", dictionary_index=0))
