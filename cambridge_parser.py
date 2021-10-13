@@ -24,28 +24,18 @@ def get_tags(block) -> [list, list, list, list, list]:
         found_tags = block.find_all(html_tag, params)
         tags = []
         for tag in found_tags:
-            if tag is not None:
-                tag = tag.text.strip()
-                tags.append(tag)
+            tag_grandparent = tag.parent.parent.get("class")
+            # var - var dvar; group - inf-group dinfg
+            if not any("var" in x or "group" in x for x in tag_grandparent):
+                tag_text = tag.text.strip()
+                if tag_text:
+                    tags.append(tag_text)
         return tags
 
     level = find_all_tags("span", {"class": "epp-xref"})
     labels_and_codes = find_all_tags("span", {"class": "gram dgram"})
-    region_block = block.find("span", {"class": "lab dlab"})
-    if region_block is not None:
-        regions = region_block.find_all("span", {"class": "region dregion"})
-        region = [item.text.strip() for item in regions if item.text.strip()]
-    else:
-        region = []
-    usage = []
-    use_block = block.find_all("span", {"class": "lab dlab"}, [])
-    for use in use_block:
-        use_parent = use.parent.get("class")
-        if not any("var" in x for x in use_parent):
-            text_block = use.find_all("span", {"class": "usage dusage"}, [])
-            for text in text_block:
-                string = text.text.strip()
-                usage.append(string)
+    region = find_all_tags("span", {"class": "region dregion"})
+    usage = find_all_tags("span", {"class": "usage dusage"})
     domain = find_all_tags("span", {"class": "domain ddomain"})
     return level, labels_and_codes, region, usage, domain
 
@@ -82,21 +72,21 @@ def get_phonetics(header_block, dictionary_index=0):
 
     if dictionary_index == 0:
         flag = 0
-        # Not so beautiful, but working solution for obtaining IPA
         ipa = header_block.find_all("span", {"class": "pron dpron"})
         for child in ipa:
+            ipa_parent = child.parent.get("class")
             if flag == 0:
-                if child.parent.get("class") == ["uk", "dpron-i"]:
+                if ipa_parent == ["uk", "dpron-i"]:
                     uk_ipa = [child.text.strip()]
                     flag = 1
             elif flag == 1:
-                if child.parent.get("class") != ["us", "dpron-i"]:
+                if ipa_parent != ["us", "dpron-i"]:
                     uk_ipa += [child.text.strip()]
                 else:
                     us_ipa = [child.text.strip()]
                     flag = 2
             else:
-                if child.parent.get("class") is None:
+                if ipa_parent is None:
                     us_ipa += [child.text.strip()]
                 else:
                     break
@@ -115,8 +105,7 @@ def concatenate_tags(tag_section, global_level, global_labels_and_codes, global_
     result_word_region = global_region + region
     result_word_usage = global_usage + usage
     result_word_domain = global_domain + domain
-    return result_word_level, result_word_labels_and_codes, result_word_region,\
-           result_word_usage, result_word_domain
+    return result_word_level, result_word_labels_and_codes, result_word_region, result_word_usage, result_word_domain
 
 
 def update_word_dict(word_dict, word, pos, definition=None, alt_terms_list=None, sentences=None, level=None,
@@ -164,14 +153,9 @@ def update_word_dict(word_dict, word, pos, definition=None, alt_terms_list=None,
         word_dict[word][pos]["image_links"].append(image_link)
 
 
-def find_phrasal(word, soup, dictionary_index=0):
+def get_idiom(soup):
     """
-    :param word: word to be parse
     :param soup: bs4 soup of the page
-    :param dictionary_index:
-        * 0 - English dictionary (Also used to search Idioms);
-        * 1 - American dictionary;
-        * 2 - Business dictionary
     :return: parsed info about phrasal verb / idiom found
     """
     phrasal_idiom_word_info = {}
@@ -181,17 +165,29 @@ def find_phrasal(word, soup, dictionary_index=0):
         # idiom parsing
         idiom_main_block = soup.find("div", {"class": "idiom-block"})
         if idiom_main_block is not None:
+            header_tag_section = idiom_main_block.find("span", {"class": "di-info"})
+
+            m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_tag_section)
+            m_alt_terms_list = get_alt_terms(header_tag_section)
+
             parsed_word = idiom_main_block.find("h2", {"class": "headword"}).text.strip()
             found_definition_block = idiom_main_block.find("div", {"class": "ddef_h"})
+
             if found_definition_block is not None:
+                tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
+                m_level, m_labels_and_codes, m_region, m_usage, m_domain = \
+                    concatenate_tags(tag_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
+
+                m_alt_terms_list += get_alt_terms(found_definition_block)
+
                 found_definition_string = found_definition_block.find("div", {'class': "def ddef_d db"})
             else:
                 found_definition_string = None
+
             idiom_definition = "" if found_definition_string is None else found_definition_string.text.strip(": ")
 
-            def_and_sent_block = idiom_main_block.find("span", {"class": "idiom-body didiom-body"})
-
             # sentence examples
+            def_and_sent_block = idiom_main_block.find("span", {"class": "idiom-body didiom-body"})
             sentence_block_list = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
             sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
                 "div",
@@ -199,67 +195,24 @@ def find_phrasal(word, soup, dictionary_index=0):
             idiom_sentences = []
             for sent_ex in sentence_block_list:
                 idiom_sentences.append(sent_ex.text.strip())
+
             update_word_dict(phrasal_idiom_word_info, word=parsed_word, pos="idiom", definition=idiom_definition,
-                             sentences=idiom_sentences)
-            return phrasal_idiom_word_info
-
-    # phrasal verb parsing
-    if len(phrasal_main_block) < dictionary_index + 1:
-        raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
-    phrasal_main_block = phrasal_main_block[dictionary_index]
-    phrasal_header_block = phrasal_main_block.find("div", {"class": "pos-header dpos-h"})
-    uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(phrasal_header_block, dictionary_index)
-
-    pos_block = phrasal_header_block.find("span", {"class": "pos dpos"})
-    pos = "" if pos_block is None else pos_block.text.strip()
-
-    m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(phrasal_header_block)
-    parsed_word_block = phrasal_main_block.find("h2", {"class": "headword"})  # tw-bw dhw dpos-h_hw
-    if parsed_word_block is None:
-        return {}
-
-    parsed_word = parsed_word_block.text.strip()
-    for def_and_sent_block in phrasal_main_block.find_all("div", {"class": "def-block ddef_block"}):  # sense-body dsense_b
-        # sentence examples
-        sentence_block_list = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
-        sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all("div",
-                                                                                                  {"class": "examp dexamp"})
-        phrasal_sentences = []
-        for sent_ex in sentence_block_list:
-            phrasal_sentences.append(sent_ex.text.strip())
-
-        found_definition_block = def_and_sent_block.find("div", {"class": "ddef_h"})
-        if found_definition_block is not None:
-            phrasal_definition = ""
-
-            alt_terms_list = []
-            if found_definition_block is not None:
-                found_definition_string = found_definition_block.find("div", {'class': "def ddef_d db"})
-                phrasal_definition = "" if found_definition_string is None else found_definition_string.text.strip(
-                    ": ")
-
-                alt_terms_list = get_alt_terms(found_definition_block.find_all("span", {"class": "var dvar"}))
-
-                # Gathering specific tags for every word usage
-                tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
-                current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain = \
-                    concatenate_tags(tag_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
-
-            update_word_dict(phrasal_idiom_word_info, word=parsed_word, pos=pos, definition=phrasal_definition,
-                             alt_terms_list=alt_terms_list, sentences=phrasal_sentences, level=current_word_level,
-                             labels_and_codes=current_word_labels_and_codes, region=current_word_region,
-                             usage=current_word_usage, domain=current_word_domain, uk_ipa=uk_ipa, us_ipa=us_ipa,
-                             uk_audio_link=uk_audio_link, us_audio_link=us_audio_link)
+                             alt_terms_list=m_alt_terms_list, sentences=idiom_sentences, level=m_level,
+                             labels_and_codes=m_labels_and_codes, region=m_region,
+                             usage=m_usage, domain=m_domain)
     return phrasal_idiom_word_info
 
 
 def get_alt_terms(alt_terms_block):
     """
-    :param alt_terms_block: = *.find_all("span", {"class": "var dvar"})
+    :param alt_terms_block
     :return:
     """
+    var_block = alt_terms_block.find_all("span", {"class": "var dvar"})
+    var_block.extend(alt_terms_block.find_all("span", {"class": "spellvar dspellvar"}))
+
     alt_terms = []
-    for alt_term in alt_terms_block:
+    for alt_term in var_block:
         alt_terms.append(alt_term.text.strip())
     return alt_terms
 
@@ -285,14 +238,20 @@ def define(word, dictionary_index=0, headers=headers):
     primal_block = soup.find_all("div", {'class': 'pr di superentry'})
     if len(primal_block) >= dictionary_index + 1:
         main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
+        main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
     else:
         raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
 
     for entity in main_block:
-        header_block = entity.find("div", {"class": "pos-header dpos-h"})
-        m_alt_terms_list = get_alt_terms(header_block.find_all("span", {"class": "var dvar"}))
+        header_block = entity.find("span", {"class": "di-info"})
+        if header_block is None:
+            header_block = entity.find("div", {"class": "pos-header dpos-h"})
+        m_alt_terms_list = get_alt_terms(header_block)
 
-        parsed_word_block = header_block.find("span", {"class": "hw dhw"})
+        parsed_word_block = entity.find("h2", {"class": "headword"})
+        if parsed_word_block is None:
+            parsed_word_block = header_block.find("span", {"class": "hw dhw"})
+        parsed_word = parsed_word_block.text.strip()
 
         pos_block = header_block.find("span", {"class": "pos dpos"})
         pos = "" if pos_block is None else pos_block.text.strip()
@@ -324,17 +283,23 @@ def define(word, dictionary_index=0, headers=headers):
             found_definition_block = def_and_sent_block.find("div", {"class": "ddef_h"})
 
             definition = ""
+            alt_terms_list = []
+            current_word_level = []
+            current_word_labels_and_codes = []
+            current_word_region = []
+            current_word_usage = []
+            current_word_domain = []
+
             if found_definition_block is not None:
                 found_definition_string = found_definition_block.find("div", {'class': "def ddef_d db"})
                 definition = "" if found_definition_string is None else found_definition_string.text.strip(": ")
 
-                tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
-
-                alt_terms_list = get_alt_terms(found_definition_block.find_all("span", {"class": "var dvar"}))
-
                 # Gathering specific tags for every word usage
+                tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
                 current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain = \
                     concatenate_tags(tag_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
+
+                alt_terms_list = get_alt_terms(found_definition_block)
 
                 # Phrase-block checking
                 # The reason for this is that on website there are two different tags for phrase-blocks
@@ -345,24 +310,22 @@ def define(word, dictionary_index=0, headers=headers):
                 if phrase_block is not None:
                     phrase_tags_section = phrase_block.find("span", {"class": "phrase-info dphrase-info"})
                     if phrase_tags_section is not None:
-                        alt_terms_list += get_alt_terms(phrase_tags_section.find_all("span", {"class": "var dvar"}))
+                        alt_terms_list += get_alt_terms(phrase_tags_section)
                         current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain = \
-                            concatenate_tags(phrase_tags_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
+                            concatenate_tags(phrase_tags_section, current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain)
                     parsed_word = phrase_block.find("span",
                                                     {"class": "phrase-title dphrase-title"}).text.strip()
-                else:
-                    parsed_word = word if parsed_word_block is None else parsed_word_block.text.strip()
 
             update_word_dict(word_info, word=parsed_word, pos=pos, definition=definition,
-                             alt_terms_list=alt_terms_list, sentences=sentences, level=current_word_level,
+                             alt_terms_list=m_alt_terms_list + alt_terms_list, sentences=sentences, level=current_word_level,
                              labels_and_codes=current_word_labels_and_codes, region=current_word_region,
                              usage=current_word_usage, domain=current_word_domain, image_link=image_link,
                              uk_ipa=uk_ipa, us_ipa=us_ipa, uk_audio_link=uk_audio_link, us_audio_link=us_audio_link)
-    phrasal_word_info = find_phrasal(word, soup, dictionary_index)
-    word_info.update(phrasal_word_info)
+    idiom = get_idiom(soup)
+    word_info.update(idiom)
     return word_info
 
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(define("wee"))
+    pprint(define("home from home"))
