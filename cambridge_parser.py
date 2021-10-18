@@ -240,7 +240,7 @@ def define(word, dictionary_index=0, headers=headers):
         main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
         main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
     else:
-        raise ValueError(f"{dict_decoder[dictionary_index]} dictionary doesn't have word {word}")
+        return {}
 
     for entity in main_block:
         header_block = entity.find("span", {"class": "di-info"})
