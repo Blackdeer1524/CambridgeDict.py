@@ -21,15 +21,16 @@ def get_tags(block) -> [list, list, list, list, list]:
     domain - domain of usage of word
     """
     def find_all_tags(html_tag: str, params: dict) -> list:
-        found_tags = block.find_all(html_tag, params)
         tags = []
-        for tag in found_tags:
-            tag_grandparent = tag.parent.parent.get("class")
-            # var - var dvar; group - inf-group dinfg
-            if not any("var" in x or "group" in x for x in tag_grandparent):
-                tag_text = tag.text.strip()
-                if tag_text:
-                    tags.append(tag_text)
+        if block is not None:
+            found_tags = block.find_all(html_tag, params)
+            for tag in found_tags:
+                tag_grandparent = tag.parent.parent.get("class")
+                # var - var dvar; group - inf-group dinfg
+                if not any("var" in x or "group" in x for x in tag_grandparent):
+                    tag_text = tag.text.strip()
+                    if tag_text:
+                        tags.append(tag_text)
         return tags
 
     level = find_all_tags("span", {"class": "epp-xref"})
@@ -53,48 +54,48 @@ def get_phonetics(header_block, dictionary_index=0):
     us_ipa = []
     uk_audio_link = ""
     us_audio_link = ""
+    if header_block is not None:
+        audio_block = header_block.find_all("span", {"class": "daud"})
 
-    audio_block = header_block.find_all("span", {"class": "daud"})
-
-    for daud in audio_block:
-        parent_class = [item.strip().lower() for item in daud.parent.get("class")]
-        audio_source = daud.find("source")
-        if audio_source is not None:
-            audio_source_link = audio_source.get("src", "")
-        else:
-            audio_source_link = ""
-
-        result_audio_link = f"{link_prefix}/{audio_source_link}" if audio_source_link else ""
-        if "uk" in parent_class:
-            uk_audio_link = result_audio_link
-        elif "us" in parent_class:
-            us_audio_link = result_audio_link
-
-    if dictionary_index == 0:
-        flag = 0
-        ipa = header_block.find_all("span", {"class": "pron dpron"})
-        for child in ipa:
-            ipa_parent = child.parent.get("class")
-            if flag == 0:
-                if ipa_parent == ["uk", "dpron-i"]:
-                    uk_ipa = [child.text.strip()]
-                    flag = 1
-            elif flag == 1:
-                if ipa_parent != ["us", "dpron-i"]:
-                    uk_ipa += [child.text.strip()]
-                else:
-                    us_ipa = [child.text.strip()]
-                    flag = 2
+        for daud in audio_block:
+            parent_class = [item.strip().lower() for item in daud.parent.get("class")]
+            audio_source = daud.find("source")
+            if audio_source is not None:
+                audio_source_link = audio_source.get("src", "")
             else:
-                if ipa_parent is None:
-                    us_ipa += [child.text.strip()]
+                audio_source_link = ""
+
+            result_audio_link = f"{link_prefix}/{audio_source_link}" if audio_source_link else ""
+            if "uk" in parent_class:
+                uk_audio_link = result_audio_link
+            elif "us" in parent_class:
+                us_audio_link = result_audio_link
+
+        if dictionary_index == 0:
+            flag = 0
+            ipa = header_block.find_all("span", {"class": "pron dpron"})
+            for child in ipa:
+                ipa_parent = child.parent.get("class")
+                if flag == 0:
+                    if ipa_parent == ["uk", "dpron-i"]:
+                        uk_ipa = [child.text.strip()]
+                        flag = 1
+                elif flag == 1:
+                    if ipa_parent != ["us", "dpron-i"]:
+                        uk_ipa += [child.text.strip()]
+                    else:
+                        us_ipa = [child.text.strip()]
+                        flag = 2
                 else:
-                    break
-    else:
-        # Cambridge has different ways of adding IPA to american and english dictionaries
-        uk_ipa = []
-        us_ipa_block = header_block.find("span", {"class": "pron dpron"})
-        us_ipa = [us_ipa_block.text.strip()] if us_ipa_block is not None else []
+                    if ipa_parent is None:
+                        us_ipa += [child.text.strip()]
+                    else:
+                        break
+        else:
+            # Cambridge has different ways of adding IPA to american and english dictionaries
+            uk_ipa = []
+            us_ipa_block = header_block.find("span", {"class": "pron dpron"})
+            us_ipa = [us_ipa_block.text.strip()] if us_ipa_block is not None else []
     return uk_ipa, us_ipa, uk_audio_link, us_audio_link
 
 
@@ -153,67 +154,18 @@ def update_word_dict(word_dict, word, pos, definition=None, alt_terms_list=None,
         word_dict[word][pos]["image_links"].append(image_link)
 
 
-def get_idiom(soup):
-    """
-    :param soup: bs4 soup of the page
-    :return: parsed info about phrasal verb / idiom found
-    """
-    phrasal_idiom_word_info = {}
-    phrasal_main_block = soup.find_all("div", {"class": "entry"})
-    # if it's not just a word, then current query is either phrasal verb, or idiom
-    if not phrasal_main_block:
-        # idiom parsing
-        idiom_main_block = soup.find("div", {"class": "idiom-block"})
-        if idiom_main_block is not None:
-            header_tag_section = idiom_main_block.find("span", {"class": "di-info"})
-
-            m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_tag_section)
-            m_alt_terms_list = get_alt_terms(header_tag_section)
-
-            parsed_word = idiom_main_block.find("h2", {"class": "headword"}).text.strip()
-            found_definition_block = idiom_main_block.find("div", {"class": "ddef_h"})
-
-            if found_definition_block is not None:
-                tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
-                m_level, m_labels_and_codes, m_region, m_usage, m_domain = \
-                    concatenate_tags(tag_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
-
-                m_alt_terms_list += get_alt_terms(found_definition_block)
-
-                found_definition_string = found_definition_block.find("div", {'class': "def ddef_d db"})
-            else:
-                found_definition_string = None
-
-            idiom_definition = "" if found_definition_string is None else found_definition_string.text.strip(": ")
-
-            # sentence examples
-            def_and_sent_block = idiom_main_block.find("span", {"class": "idiom-body didiom-body"})
-            sentence_block_list = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
-            sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
-                "div",
-                {"class": "examp dexamp"})
-            idiom_sentences = []
-            for sent_ex in sentence_block_list:
-                idiom_sentences.append(sent_ex.text.strip())
-
-            update_word_dict(phrasal_idiom_word_info, word=parsed_word, pos="idiom", definition=idiom_definition,
-                             alt_terms_list=m_alt_terms_list, sentences=idiom_sentences, level=m_level,
-                             labels_and_codes=m_labels_and_codes, region=m_region,
-                             usage=m_usage, domain=m_domain)
-    return phrasal_idiom_word_info
-
-
 def get_alt_terms(alt_terms_block):
     """
     :param alt_terms_block
     :return:
     """
-    var_block = alt_terms_block.find_all("span", {"class": "var dvar"})
-    var_block.extend(alt_terms_block.find_all("span", {"class": "spellvar dspellvar"}))
-
     alt_terms = []
-    for alt_term in var_block:
-        alt_terms.append(alt_term.text.strip())
+    if alt_terms_block is not None:
+        var_block = alt_terms_block.find_all("span", {"class": "var dvar"})
+        var_block.extend(alt_terms_block.find_all("span", {"class": "spellvar dspellvar"}))
+
+        for alt_term in var_block:
+            alt_terms.append(alt_term.text.strip())
     return alt_terms
 
 
@@ -239,6 +191,7 @@ def define(word, dictionary_index=0, headers=headers):
     if len(primal_block) >= dictionary_index + 1:
         main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
         main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
+        main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pr idiom-block"}))
     else:
         return {}
 
@@ -250,11 +203,11 @@ def define(word, dictionary_index=0, headers=headers):
 
         parsed_word_block = entity.find("h2", {"class": "headword"})
         if parsed_word_block is None:
-            parsed_word_block = header_block.find("span", {"class": "hw dhw"})
-        parsed_word = parsed_word_block.text.strip()
+            parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
+        parsed_word = parsed_word_block.text.strip() if parsed_word_block is not None else ""
 
-        pos_block = header_block.find("span", {"class": "pos dpos"})
-        pos = "" if pos_block is None else pos_block.text.strip()
+        pos_block = header_block.find("span", {"class": "pos dpos"}) if header_block is not None else None
+        pos = "idiom" if pos_block is None else pos_block.text.strip()
 
         uk_ipa, us_ipa, uk_audio_link, us_audio_link = get_phonetics(header_block, dictionary_index)
 
@@ -321,11 +274,9 @@ def define(word, dictionary_index=0, headers=headers):
                              labels_and_codes=current_word_labels_and_codes, region=current_word_region,
                              usage=current_word_usage, domain=current_word_domain, image_link=image_link,
                              uk_ipa=uk_ipa, us_ipa=us_ipa, uk_audio_link=uk_audio_link, us_audio_link=us_audio_link)
-    idiom = get_idiom(soup)
-    word_info.update(idiom)
     return word_info
 
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(define("home from home"))
+    pprint(define("born and bred"))
