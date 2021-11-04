@@ -204,7 +204,7 @@ def define(word, dictionary_index=0, headers=headers):
         parsed_word_block = entity.find("h2", {"class": "headword"})
         if parsed_word_block is None:
             parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
-        parsed_word = parsed_word_block.text.strip() if parsed_word_block is not None else ""
+        header_word = parsed_word_block.text.strip() if parsed_word_block is not None else ""
 
         pos_block = header_block.find("span", {"class": "pos dpos"}) if header_block is not None else None
         pos = "idiom" if pos_block is None else pos_block.text.strip()
@@ -215,6 +215,8 @@ def define(word, dictionary_index=0, headers=headers):
         m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_block)
 
         for def_and_sent_block in entity.find_all("div", {'class': 'def-block ddef_block'}):
+            current_def_block_word = header_word
+
             image_section = def_and_sent_block.find("div", {"class": "dimg"})
             image_link = ""
             if image_section is not None:
@@ -266,10 +268,9 @@ def define(word, dictionary_index=0, headers=headers):
                         alt_terms_list += get_alt_terms(phrase_tags_section)
                         current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain = \
                             concatenate_tags(phrase_tags_section, current_word_level, current_word_labels_and_codes, current_word_region, current_word_usage, current_word_domain)
-                    parsed_word = phrase_block.find("span",
-                                                    {"class": "phrase-title dphrase-title"}).text.strip()
+                    current_def_block_word = phrase_block.find("span", {"class": "phrase-title dphrase-title"}).text.strip()
 
-            update_word_dict(word_info, word=parsed_word, pos=pos, definition=definition,
+            update_word_dict(word_info, word=current_def_block_word, pos=pos, definition=definition,
                              alt_terms_list=m_alt_terms_list + alt_terms_list, sentences=sentences, level=current_word_level,
                              labels_and_codes=current_word_labels_and_codes, region=current_word_region,
                              usage=current_word_usage, domain=current_word_domain, image_link=image_link,
@@ -279,4 +280,4 @@ def define(word, dictionary_index=0, headers=headers):
 
 if __name__ == "__main__":
     from pprint import pprint
-    pprint(define("born and bred"))
+    pprint(define("make up"))
