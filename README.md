@@ -27,7 +27,7 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
                 'examples': [[1-st sentence example for the 1-st definition, ...],
                              ...
                              [1-st sentence example for the N-th definition, ...]],
-                'images': [dict_image_link_1, ..., dict_image_link_n],
+                'image_links': [dict_image_link_1, ..., dict_image_link_n],
                 'labels_and_codes': [labels_and_codes_1, ..., labels_and_codes_N],
                 'level': [[level_1], ..., [level_N]],
                 'region': [[region_1], ..., [region_N]],
