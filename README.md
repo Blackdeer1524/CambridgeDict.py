@@ -11,11 +11,11 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 ```python
 {<word>: 
        {<pos>: {'UK_IPA': [UK IPA for the 1-st definition, ..., UK IPA for the N-th definition],
-                'UK_audio_link': [[1-st uk audio link for the 1-st definition, ...],
+                'UK_audio_links': [[1-st uk audio link for the 1-st definition, ...],
                                   ...
                                   [1-st uk audio link for the N-th definition, ...]],
                 'US_IPA': [US IPA for the 1-st definition, ..., US IPA for the N-th definition],
-                'US_audio_link': [[1-st us audio link for the 1-st definition, ...],
+                'US_audio_links': [[1-st us audio link for the 1-st definition, ...],
                                   ...
                                   [1-st us audio link for the N-th definition, ...]],
                 'alt_terms': [[alt_terms_1], ..., [alt_terms_N]],
