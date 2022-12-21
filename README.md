@@ -10,28 +10,42 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 # Return pattern
 ```python
 {<word>: 
-       {<pos>: {'UK_IPA': [UK IPA for the 1-st definition, ..., UK IPA for the N-th definition],
-                'UK_audio_links': [[1-st uk audio link for the 1-st definition, ...],
-                                  ...
-                                  [1-st uk audio link for the N-th definition, ...]],
-                'US_IPA': [US IPA for the 1-st definition, ..., US IPA for the N-th definition],
-                'US_audio_links': [[1-st us audio link for the 1-st definition, ...],
-                                  ...
-                                  [1-st us audio link for the N-th definition, ...]],
-                'alt_terms': [[alt_terms_1], ..., [alt_terms_N]],
-                'irregular_forms': [[1-st irregular form for the 1-st definition, ...],
-                                    ...
-                                    [1-st irregular form for the N-th definition, ...]],
-                'definitions': [definition_1, ..., definition_N],
-                'domain': [[domains_1], ..., [domains_N]],
-                'examples': [[1-st sentence example for the 1-st definition, ...],
-                             ...
-                             [1-st sentence example for the N-th definition, ...]],
-                'image_links': [dict_image_link_1, ..., dict_image_link_n],
-                'labels_and_codes': [labels_and_codes_1, ..., labels_and_codes_N],
-                'level': [[level_1], ..., [level_N]],
-                'region': [[region_1], ..., [region_N]],
-                'usage': [[usage_1], ..., [usage_N]]},
+       {<pos>: {'definitions':      [definition_1, ..., definition_N],
+                
+                # one string per definition
+                'UK_IPA':           [UK IPA for the 1-st definition, ..., UK IPA for the N-th definition],
+                'US_IPA':           [US IPA for the 1-st definition, ..., US IPA for the N-th definition],
+                'image_links':      [image link for the 1-st definition, ..., image link for the N-th definition],
+                'levels':           [level for the 1-st definition, ..., level for the N-th definition],
+
+                # multiple strings per definition
+                'UK_audio_links':   [[1-st uk audio link for the 1-st definition, ...],
+                                     ...
+                                     [1-st uk audio link for the N-th definition, ...]],
+                'US_audio_links':   [[1-st us audio link for the 1-st definition, ...],
+                                     ...
+                                     [1-st us audio link for the N-th definition, ...]],
+                'examples':         [[1-st sentence example for the 1-st definition, ...],
+                                     ...
+                                     [1-st sentence example for the N-th definition, ...]],
+                'alt_terms':        [[1-st alternative term for the 1-st definition, ...],
+                                     ...
+                                     [1-st alternative term for the N-th definition, ...]],
+                'irregular_forms':  [[1-st irregular form for the 1-st definition, ...],
+                                     ...
+                                     [1-st irregular form for the N-th definition, ...]],
+                'domains':          [[1-st domains for the 1-st definition, ...],
+                                     ...
+                                     [1-st domains for the N-th definition, ...]],,
+                'labels_and_codes': [[1-st labels & codes for the 1-st definition, ...],
+                                     ...
+                                     [1-st labels & codes for the N-th definition, ...]],
+                'regions':          [[1-st regions for the 1-st definition, ...],
+                                     ...
+                                     [1-st regions for the N-th definition, ...]],
+                'usages':           [[1-st usages for the 1-st definition, ...],
+                                      ...
+                                      [1-st usages for the N-th definition, ...]]},
        ...
 }}
 ```
@@ -39,7 +53,6 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 
 ```python
 define('reconnaissance')
-
 --->   {'reconnaissance': {'noun': {'UK_IPA': [['/rɪˈkɒn.ɪ.səns/']],
                                    'UK_audio_links': [['https://dictionary.cambridge.org//media/english/uk_pron/u/ukr/ukrec/ukrecli023.mp3']],
                                    'US_IPA': [['/rɪˈkɑː.nə.səns/']],
@@ -51,16 +64,16 @@ define('reconnaissance')
                                                  'or positions by sending out '
                                                  'small groups of soldiers or by '
                                                  'using aircraft, etc.'],
-                                   'domain': [['military']],
+                                   'domains': [['military']],
                                    'examples': [['Aerial reconnaissance of the enemy '
                                                  'position showed they were ready to '
                                                  'attack.']],
                                    'image_links': [''],
                                    'irregular_forms': [[]],
                                    'labels_and_codes': [['[ U ]']],
-                                   'level': [[]],
-                                   'region': [[]],
-                                   'usage': [['specialized']]}}}
+                                   'levels': [''],
+                                   'regions': [[]],
+                                   'usages': [['specialized']]}}}
 
 define("ox")
 --->   {'ox': {'noun': {'UK_IPA': [['/ɒks/']],
@@ -73,18 +86,17 @@ define("ox")
                                    'past for pulling heavy things on farms, or, '
                                    'more generally, any adult of the cattle '
                                    'family'],
-                     'domain': [[]],
+                     'domains': [[]],
                      'examples': [[]],
-                     'image_links': ['https://dictionary.cambridge.org/images/thumb/ox_noun_002_26064.jpg?version=5.0.275'],
+                     'image_links': ['https://dictionary.cambridge.org/images/thumb/ox_noun_002_26064.jpg?version=5.0.286'],
                      'irregular_forms': [['plural oxen']],
                      'labels_and_codes': [['[ C ]']],
-                     'level': [[]],
-                     'region': [[]],
-                     'usage': [[]]}}}
+                     'levels': [''],
+                     'regions': [[]],
+                     'usages': [[]]}}}
 
 
 define("bass")
-
 --->   {'bass': {'adjective': {'UK_IPA': [['/beɪs/']],
                             'UK_audio_links': [['https://dictionary.cambridge.org//media/english/uk_pron/u/ukb/ukbar/ukbaroq020.mp3']],
                             'US_IPA': [['/beɪs/']],
@@ -92,14 +104,14 @@ define("bass")
                             'alt_terms': [[]],
                             'definitions': ['playing, singing, or producing the '
                                           'lowest range of musical notes'],
-                            'domain': [[]],
+                            'domains': [[]],
                             'examples': [['a bass drum/guitar/trombone']],
                             'image_links': [''],
                             'irregular_forms': [[]],
                             'labels_and_codes': [['[ before noun ]']],
-                            'level': [[]],
-                            'region': [[]],
-                            'usage': [[]]},
+                            'levels': [''],
+                            'regions': [[]],
+                            'usages': [[]]},
               'noun': {'UK_IPA': [['/beɪs/'],
                                    ['/beɪs/'],
                                    ['/beɪs/'],
@@ -130,7 +142,7 @@ define("bass")
                                           'plays very low notes',
                                           'a type of fish found in rivers or the sea '
                                           'whose flesh is eaten as a food'],
-                     'domain': [[], [], [], [], []],
+                     'domains': [[], [], [], [], []],
                      'examples': [['He sings bass.', "Italy's leading bass"],
                                    ['Turn down the bass.'],
                                    [],
@@ -140,9 +152,9 @@ define("bass")
                                    'This is served with a striped bass fillet.']],
                      'image_links': ['',
                                           '',
-                                          'https://dictionary.cambridge.org/images/thumb/double_noun_002_11343.jpg?version=5.0.275',
-                                          'https://dictionary.cambridge.org/images/thumb/bass_noun_004_0248.jpg?version=5.0.275',
-                                          'https://dictionary.cambridge.org/images/thumb/bass_noun_002_02737.jpg?version=5.0.275'],
+                                          'https://dictionary.cambridge.org/images/thumb/double_noun_002_11343.jpg?version=5.0.286',
+                                          'https://dictionary.cambridge.org/images/thumb/bass_noun_004_0248.jpg?version=5.0.286',
+                                          'https://dictionary.cambridge.org/images/thumb/bass_noun_002_02737.jpg?version=5.0.286'],
                      'irregular_forms': [['plural basses'],
                                           ['plural basses'],
                                           ['plural basses'],
@@ -153,8 +165,7 @@ define("bass")
                                           ['[ C ]'],
                                           ['[ C ]'],
                                           ['[ C ]']],
-                     'level': [[], [], [], [], []],
-                     'region': [[], [], [], [], []],
-                     'usage': [[], [], [], [], []]}}}
-
+                     'levels': ['', '', '', '', ''],
+                     'regions': [[], [], [], [], []],
+                     'usages': [[], [], [], [], []]}}}
 ```
