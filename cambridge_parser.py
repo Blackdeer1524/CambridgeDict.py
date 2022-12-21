@@ -266,7 +266,6 @@ def define(word: str,
     try:
         page = requests.get(link, headers=request_headers, timeout=timeout)
     except Exception as e:
-        print(e)
         return {}
 
     word_info: RESULT_FORMAT = {}
