@@ -13,12 +13,16 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
        {<pos>: {'definitions':      [definition_1, ..., definition_N],
                 
                 # one string per definition
-                'UK_IPA':           [UK IPA for the 1-st definition, ..., UK IPA for the N-th definition],
-                'US_IPA':           [US IPA for the 1-st definition, ..., US IPA for the N-th definition],
                 'image_links':      [image link for the 1-st definition, ..., image link for the N-th definition],
                 'levels':           [level for the 1-st definition, ..., level for the N-th definition],
 
                 # multiple strings per definition
+                'UK_IPA':           [[1-st UK IPA for the 1-st definition, ...],
+                                     ...
+                                     [1-st UK IPA for the N-th definition, ...]],
+                'US_IPA':           [[1-st US IPA for the 1-st definition, ...],
+                                     ...
+                                     [1-st US IPA for the N-th definition, ...]],
                 'UK_audio_links':   [[1-st uk audio link for the 1-st definition, ...],
                                      ...
                                      [1-st uk audio link for the N-th definition, ...]],
