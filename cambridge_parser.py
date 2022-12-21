@@ -1,6 +1,6 @@
 import bs4
 import requests
-from typing import Optional, TypeVar, Type, Iterator, TypedDict
+from typing import Optional, TypedDict
 from enum import IntEnum, auto
 
 
@@ -49,11 +49,11 @@ class DictionaryVariation(IntEnum):
     American = auto()
     Business = auto()
 
-def get_tags(tags_section: bs4.Tag) -> tuple[LEVEL_T, 
-                                             LABELS_AND_CODES_T, 
-                                             REGIONS_T, 
-                                             USAGES_T, 
-                                             DOMAINS_T]:
+def get_tags(tags_section: Optional[bs4.Tag]) -> tuple[LEVEL_T, 
+                                                       LABELS_AND_CODES_T, 
+                                                       REGIONS_T, 
+                                                       USAGES_T, 
+                                                       DOMAINS_T]:
     def find_tag(html_tag: str, params: dict) -> str:
         nonlocal tags_section
 
@@ -88,19 +88,19 @@ def get_tags(tags_section: bs4.Tag) -> tuple[LEVEL_T,
                     tags.append(tag_text)
         return tags
 
-    level = find_tag("span", {"class": "epp-xref"})
+    level            = find_tag(     "span", {"class": "epp-xref"})
     labels_and_codes = find_all_tags("span", {"class": "gram dgram"})
-    region = find_all_tags("span", {"class": "region dregion"})
-    usage = find_all_tags("span", {"class": "usage dusage"})
-    domain = find_all_tags("span", {"class": "domain ddomain"})
+    region           = find_all_tags("span", {"class": "region dregion"})
+    usage            = find_all_tags("span", {"class": "usage dusage"})
+    domain           = find_all_tags("span", {"class": "domain ddomain"})
     return level, labels_and_codes, region, usage, domain
 
 def get_phonetics(
-    header_block: bs4.Tag, 
-    dictionary_index: DictionaryVariation = DictionaryVariation.English) -> tuple[UK_IPA_T, 
-                                                                                  US_IPA_T, 
-                                                                                  UK_AUDIO_LINKS_T, 
-                                                                                  US_AUDIO_LINKS_T]:
+    header_block: Optional[bs4.Tag], 
+    dictionary_index: DictionaryVariation) -> tuple[UK_IPA_T, 
+                                                    US_IPA_T, 
+                                                    UK_AUDIO_LINKS_T, 
+                                                    US_AUDIO_LINKS_T]:
     uk_ipa: UK_IPA_T = []
     us_ipa: US_IPA_T = []
     uk_audio_links: UK_AUDIO_LINKS_T = []
@@ -124,7 +124,7 @@ def get_phonetics(
         elif "us" in parent_class:
             us_audio_links.append(result_audio_link)
 
-    if dictionary_index == 0:
+    if dictionary_index == DictionaryVariation.English:
         ipa = header_block.find_all("span", {"class": "pron dpron"})
         for child in ipa:
             ipa_parent = child.parent.get("class")
@@ -143,7 +143,7 @@ def get_phonetics(
     return uk_ipa, us_ipa, uk_audio_links, us_audio_links
 
 
-def concatenate_tags(tag_section:             bs4.Tag, 
+def concatenate_tags(tag_section:             Optional[bs4.Tag], 
                      global_level:            LEVEL_T,
                      global_labels_and_codes: LABELS_AND_CODES_T,
                      global_region:           REGIONS_T, 
@@ -159,70 +159,61 @@ def concatenate_tags(tag_section:             bs4.Tag,
     return result_level, result_labels_and_codes, result_word_region, result_word_usage, result_word_domain
 
 
-def update_word_dict(word_dict:            RESULT_FORMAT,
-                     word:                 Optional[WORD_T]            =None,
-                     pos:                  Optional[POS_T]             =None,
-                     definition:           Optional[DEFINITION_T]      =None,
-                     alt_terms:            Optional[ALT_TERMS_T]       =None, 
-                     irregular_forms:      Optional[IRREGULAR_FORMS_T] =None,
-                     examples:             Optional[EXAMPLES_T]        =None,
-                     level:                Optional[LEVEL_T]           =None,
-                     labels_and_codes:     Optional[LABELS_AND_CODES_T]=None,
-                     region:               Optional[REGIONS_T]         =None,
-                     usage:                Optional[USAGES_T]          =None,
-                     domain:               Optional[DOMAINS_T]         =None,
-                     image_link:           Optional[IMAGE_LINK_T]      =None,
-                     uk_ipa:               Optional[UK_IPA_T]          =None,
-                     us_ipa:               Optional[US_IPA_T]          =None,
-                     uk_audio_links:       Optional[UK_AUDIO_LINKS_T]  =None,
-                     us_audio_links:       Optional[US_AUDIO_LINKS_T]  =None):
+def update_word_dict(word_dict:        RESULT_FORMAT,
+                     word:             Optional[WORD_T]            =None,
+                     pos:              Optional[POS_T]             =None,
+                     definition:       Optional[DEFINITION_T]      =None,
+                     alt_terms:        Optional[ALT_TERMS_T]       =None, 
+                     irregular_forms:  Optional[IRREGULAR_FORMS_T] =None,
+                     examples:         Optional[EXAMPLES_T]        =None,
+                     level:            Optional[LEVEL_T]           =None,
+                     labels_and_codes: Optional[LABELS_AND_CODES_T]=None,
+                     region:           Optional[REGIONS_T]         =None,
+                     usage:            Optional[USAGES_T]          =None,
+                     domain:           Optional[DOMAINS_T]         =None,
+                     image_link:       Optional[IMAGE_LINK_T]      =None,
+                     uk_ipa:           Optional[UK_IPA_T]          =None,
+                     us_ipa:           Optional[US_IPA_T]          =None,
+                     uk_audio_links:   Optional[UK_AUDIO_LINKS_T]  =None,
+                     us_audio_links:   Optional[US_AUDIO_LINKS_T]  =None):
     
-    T = TypeVar('T')
-    def preprocess(args: tuple[Optional[T], ...], default_constructor: Type[T]) -> Iterator[T]:
-        return (item if item is not None else default_constructor() for item in args)
-
-    word, pos, definition, level, image_link = preprocess(args=(word, pos, definition, level, image_link),
-                                                          default_constructor=str)
-
-    uk_ipa, us_ipa, uk_audio_links, us_audio_links, domain, examples, region, usage, alt_terms, irregular_forms, labels_and_codes = \
-        preprocess(args=(uk_ipa, us_ipa, uk_audio_links, us_audio_links, domain, examples, region, usage, alt_terms, irregular_forms, labels_and_codes),
-                   default_constructor=list)
+    word = word if word is not None else ""
+    pos = pos if pos is not None else ""
 
     if word_dict.get(word) is None:
         word_dict[word] = {}
 
     if word_dict[word].get(pos) is None:
-        word_dict[word][pos] = {"definitions": [],
-                                "alt_terms": [],
-                                "irregular_forms": [],
-                                "examples": [],
-                                "levels": [],
+        word_dict[word][pos] = {"definitions":      [],
+                                "examples":         [],
+                                "UK_IPA":           [],
+                                "US_IPA":           [],
+                                "UK_audio_links":   [],
+                                "US_audio_links":   [],
+                                "image_links":      [],
+                                "alt_terms":        [],
+                                "irregular_forms":  [],
+                                "levels":           [],
                                 "labels_and_codes": [],
-                                "regions": [],
-                                "usages": [],
-                                "domains": [],
-                                "image_links": [],
-                                "UK_IPA": [],
-                                "US_IPA": [],
-                                "UK_audio_links": [],
-                                "US_audio_links": []}
-    word_dict[word][pos]["definitions"].append(definition)
-    word_dict[word][pos]["alt_terms"].append(alt_terms)
-    word_dict[word][pos]["irregular_forms"].append(irregular_forms)
-    word_dict[word][pos]["examples"].append(examples)
-    word_dict[word][pos]["levels"].append(level)
-    word_dict[word][pos]["labels_and_codes"].append(labels_and_codes)
-    word_dict[word][pos]["regions"].append(region)
-    word_dict[word][pos]["usages"].append(usage)
-    word_dict[word][pos]["domains"].append(domain)
-    word_dict[word][pos]["image_links"].append(image_link)
-    word_dict[word][pos]["UK_IPA"].append(uk_ipa)
-    word_dict[word][pos]["US_IPA"].append(us_ipa)
-    word_dict[word][pos]["UK_audio_links"].append(uk_audio_links)
-    word_dict[word][pos]["US_audio_links"].append(us_audio_links)
+                                "regions":          [],
+                                "usages":           [],
+                                "domains":          []}
+    word_dict[word][pos]["definitions"]     .append(definition       if definition        is not None else "")
+    word_dict[word][pos]["levels"]          .append(level            if level             is not None else "")
+    word_dict[word][pos]["image_links"]     .append(image_link       if image_link        is not None else "")
+    word_dict[word][pos]["UK_IPA"]          .append(uk_ipa           if uk_ipa            is not None else [])
+    word_dict[word][pos]["US_IPA"]          .append(us_ipa           if us_ipa            is not None else [])
+    word_dict[word][pos]["UK_audio_links"]  .append(uk_audio_links   if uk_audio_links    is not None else [])
+    word_dict[word][pos]["US_audio_links"]  .append(us_audio_links   if us_audio_links    is not None else [])
+    word_dict[word][pos]["examples"]        .append(examples         if examples          is not None else [])
+    word_dict[word][pos]["alt_terms"]       .append(alt_terms        if alt_terms         is not None else [])
+    word_dict[word][pos]["irregular_forms"] .append(irregular_forms  if irregular_forms   is not None else [])
+    word_dict[word][pos]["labels_and_codes"].append(labels_and_codes if labels_and_codes  is not None else [])
+    word_dict[word][pos]["regions"]         .append(region           if region            is not None else [])
+    word_dict[word][pos]["usages"]          .append(usage            if usage             is not None else [])
+    word_dict[word][pos]["domains"]         .append(domain           if domain            is not None else [])
 
-
-def get_irregular_forms(word_header_block) -> IRREGULAR_FORMS_T:
+def get_irregular_forms(word_header_block: Optional[bs4.Tag]) -> IRREGULAR_FORMS_T:
     forms: IRREGULAR_FORMS_T = []
     if word_header_block is None:
         return forms
@@ -242,8 +233,8 @@ def get_irregular_forms(word_header_block) -> IRREGULAR_FORMS_T:
     return forms
 
 
-def get_alt_terms(word_header_block: bs4.Tag) -> ALT_TERMS_T:
-    alt_terms: list[str] = []
+def get_alt_terms(word_header_block: Optional[bs4.Tag]) -> ALT_TERMS_T:
+    alt_terms: ALT_TERMS_T = []
     if word_header_block is None:
         return alt_terms
 
@@ -257,16 +248,13 @@ def get_alt_terms(word_header_block: bs4.Tag) -> ALT_TERMS_T:
 def define(word: str, 
            dictionary_index: DictionaryVariation=DictionaryVariation.English, 
            request_headers: Optional[dict]=None, 
-           timeout:int=5) -> RESULT_FORMAT:
+           timeout:float=5.0) -> RESULT_FORMAT:
     if request_headers is None:
         request_headers = DEFAULT_REQUESTS_HEADERS
 
     link = f"{LINK_PREFIX}/dictionary/english/{word}"
     # will raise error if request_headers are None
-    try:
-        page = requests.get(link, headers=request_headers, timeout=timeout)
-    except Exception as e:
-        return {}
+    page = requests.get(link, headers=request_headers, timeout=timeout)
 
     word_info: RESULT_FORMAT = {}
 
@@ -274,12 +262,12 @@ def define(word: str,
     # Only english dictionary
     # word block which contains definitions for every POS_T.
     primal_block = soup.find_all("div", {'class': 'pr di superentry'})
-    if len(primal_block) >= dictionary_index + 1:
-        main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
-        main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
-        main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pr idiom-block"}))
-    else:
+    if len(primal_block) <= dictionary_index:
         return {}
+
+    main_block = primal_block[dictionary_index].find_all("div", {"class": "pr entry-body__el"})
+    main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
+    main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pr idiom-block"}))
 
     for entity in main_block:
         header_block = entity.find("span", {"class": "di-info"})
@@ -367,7 +355,6 @@ def define(word: str,
                                              current_word_domains)
                     current_def_block_word = phrase_block.find("span",
                                                                {"class": "phrase-title dphrase-title"}).text.strip()
-            
 
             update_word_dict(word_info,
                              word=current_def_block_word,
@@ -392,4 +379,4 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("bass", dictionary_index=DictionaryVariation.English))
+    pprint(define("bass", dictionary_index=DictionaryVariation.English, timeout=5.3))
