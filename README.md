@@ -10,7 +10,7 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
 # Return pattern
 ```python
 {<word>: 
-       {<pos>: {'definitions':      [definition_1, ..., definition_N],
+       {<pos>: {'definitions':      [1-st definition, ..., N-th definition],
                 
                 # one string per definition
                 'image_links':      [image link for the 1-st definition, ..., image link for the N-th definition],
@@ -38,18 +38,18 @@ Python HTML parser for [Cambridge dictionary](https://dictionary.cambridge.org/)
                 'irregular_forms':  [[1-st irregular form for the 1-st definition, ...],
                                      ...
                                      [1-st irregular form for the N-th definition, ...]],
-                'domains':          [[1-st domains for the 1-st definition, ...],
+                'domains':          [[1-st domain for the 1-st definition, ...],
                                      ...
-                                     [1-st domains for the N-th definition, ...]],,
+                                     [1-st domain for the N-th definition, ...]],,
                 'labels_and_codes': [[1-st labels & codes for the 1-st definition, ...],
                                      ...
                                      [1-st labels & codes for the N-th definition, ...]],
-                'regions':          [[1-st regions for the 1-st definition, ...],
+                'regions':          [[1-st region for the 1-st definition, ...],
                                      ...
-                                     [1-st regions for the N-th definition, ...]],
-                'usages':           [[1-st usages for the 1-st definition, ...],
+                                     [1-st region for the N-th definition, ...]],
+                'usages':           [[1-st usage for the 1-st definition, ...],
                                       ...
-                                      [1-st usages for the N-th definition, ...]]},
+                                      [1-st usage for the N-th definition, ...]]},
        ...
 }}
 ```
