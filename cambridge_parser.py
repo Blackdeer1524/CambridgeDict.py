@@ -168,9 +168,9 @@ def update_word_dict(word_dict:        RESULT_FORMAT,
                      examples:         Optional[EXAMPLES_T]        =None,
                      level:            Optional[LEVEL_T]           =None,
                      labels_and_codes: Optional[LABELS_AND_CODES_T]=None,
-                     region:           Optional[REGIONS_T]         =None,
-                     usage:            Optional[USAGES_T]          =None,
-                     domain:           Optional[DOMAINS_T]         =None,
+                     regions:          Optional[REGIONS_T]         =None,
+                     usages:           Optional[USAGES_T]          =None,
+                     domains:          Optional[DOMAINS_T]         =None,
                      image_link:       Optional[IMAGE_LINK_T]      =None,
                      uk_ipa:           Optional[UK_IPA_T]          =None,
                      us_ipa:           Optional[US_IPA_T]          =None,
@@ -209,9 +209,9 @@ def update_word_dict(word_dict:        RESULT_FORMAT,
     word_dict[word][pos]["alt_terms"]       .append(alt_terms        if alt_terms         is not None else [])
     word_dict[word][pos]["irregular_forms"] .append(irregular_forms  if irregular_forms   is not None else [])
     word_dict[word][pos]["labels_and_codes"].append(labels_and_codes if labels_and_codes  is not None else [])
-    word_dict[word][pos]["regions"]         .append(region           if region            is not None else [])
-    word_dict[word][pos]["usages"]          .append(usage            if usage             is not None else [])
-    word_dict[word][pos]["domains"]         .append(domain           if domain            is not None else [])
+    word_dict[word][pos]["regions"]         .append(regions          if regions           is not None else [])
+    word_dict[word][pos]["usages"]          .append(usages           if usages            is not None else [])
+    word_dict[word][pos]["domains"]         .append(domains          if domains           is not None else [])
 
 def get_irregular_forms(word_header_block: Optional[bs4.Tag]) -> IRREGULAR_FORMS_T:
     forms: IRREGULAR_FORMS_T = []
@@ -273,8 +273,8 @@ def define(word: str,
         header_block = entity.find("span", {"class": "di-info"})
         if header_block is None:
             header_block = entity.find("div", {"class": "pos-header dpos-h"})
-        m_alt_terms_list = get_alt_terms(header_block)
-        m_irregular_forms_list = get_irregular_forms(header_block)
+        pos_alt_terms_list = get_alt_terms(header_block)
+        pos_irregular_forms_list = get_irregular_forms(header_block)
 
         parsed_word_block = entity.find("h2", {"class": "headword"})
         if parsed_word_block is None:
@@ -287,9 +287,18 @@ def define(word: str,
         uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block, dictionary_index)
 
         # data gathered from the word header
-        m_level, m_labels_and_codes, m_region, m_usage, m_domain = get_tags(header_block)
+        pos_level, pos_labels_and_codes, pos_regions, pos_usages, pos_domains = get_tags(header_block)
 
         for def_and_sent_block in entity.find_all("div", {'class': 'def-block ddef_block'}):
+            definition:                    DEFINITION_T       = ""
+            alt_terms:                     ALT_TERMS_T        = []
+            irregular_forms:               IRREGULAR_FORMS_T  = []
+            current_word_level:            LEVEL_T            = ""
+            current_word_labels_and_codes: LABELS_AND_CODES_T = []
+            current_word_regions:          REGIONS_T          = []
+            current_word_usages:           USAGES_T           = []
+            current_word_domains:          DOMAINS_T          = []
+
             current_def_block_word = header_word
 
             image_section = def_and_sent_block.find("div", {"class": "dimg"})
@@ -311,15 +320,6 @@ def define(word: str,
 
             found_definition_block = def_and_sent_block.find("div", {"class": "ddef_h"})
 
-            definition: DEFINITION_T = ""
-            alt_terms: ALT_TERMS_T = []
-            irregular_forms: IRREGULAR_FORMS_T = []
-            current_word_level: LEVEL_T = ""
-            current_word_labels_and_codes: LABELS_AND_CODES_T = []
-            current_word_regions: REGIONS_T = []
-            current_word_usages: USAGES_T = []
-            current_word_domains: DOMAINS_T = []
-
             if found_definition_block is not None:
                 found_definition_string = found_definition_block.find("div", {'class': "def ddef_d db"})
                 definition = "" if found_definition_string is None else found_definition_string.text.strip(": ")
@@ -327,12 +327,12 @@ def define(word: str,
                 # Gathering specific tags for every word usage
                 tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
                 current_word_level, current_word_labels_and_codes, current_word_regions, current_word_usages, current_word_domains = \
-                    concatenate_tags(tag_section, m_level, m_labels_and_codes, m_region, m_usage, m_domain)
+                    concatenate_tags(tag_section, pos_level, pos_labels_and_codes, pos_regions, pos_usages, pos_domains)
 
                 alt_terms = get_alt_terms(found_definition_block)
                 irregular_forms = get_irregular_forms(found_definition_block)
 
-                # Phrase-block checking
+                # Phrase-block check
                 # The reason for this is that on website there are two different tags for phrase-blocks
                 phrase_block = found_definition_block.find_parent("div",
                                                                   {"class": "pr phrase-block dphrase-block"})
@@ -360,14 +360,14 @@ def define(word: str,
                              word=current_def_block_word,
                              pos=pos,
                              definition=definition,
-                             alt_terms=m_alt_terms_list + alt_terms,
-                             irregular_forms=irregular_forms + m_irregular_forms_list,
+                             alt_terms=pos_alt_terms_list + alt_terms,
+                             irregular_forms=irregular_forms + pos_irregular_forms_list,
                              examples=examples,
                              level=current_word_level,
                              labels_and_codes=current_word_labels_and_codes,
-                             region=current_word_regions,
-                             usage=current_word_usages,
-                             domain=current_word_domains,
+                             regions=current_word_regions,
+                             usages=current_word_usages,
+                             domains=current_word_domains,
                              image_link=image_link,
                              uk_ipa=uk_ipa,
                              us_ipa=us_ipa,
@@ -379,4 +379,4 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("bass", dictionary_index=DictionaryVariation.English, timeout=5.3))
+    pprint(define("reconnaissance", dictionary_index=DictionaryVariation.English, timeout=5.3))
