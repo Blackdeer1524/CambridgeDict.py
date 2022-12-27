@@ -281,8 +281,8 @@ def define(word: str,
             parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
         header_word = parsed_word_block.text.strip() if parsed_word_block is not None else ""
 
-        pos_block = header_block.find("span", {"class": "pos dpos"}) if header_block is not None else None
-        pos = "idiom" if pos_block is None else pos_block.text.strip()
+        pos_block = header_block.find_all("span", {"class": "pos dpos"}) if header_block is not None else []
+        pos = "idiom" if not pos_block else ",".join((pos_section.text.strip() for pos_section in pos_block))
 
         uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block, dictionary_index)
 
