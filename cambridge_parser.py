@@ -2,6 +2,7 @@ import bs4
 import requests
 from typing import Optional, TypedDict
 from enum import IntEnum, auto
+from dataclasses import dataclass
 
 
 DEFAULT_REQUESTS_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
@@ -20,12 +21,12 @@ EXAMPLES_T         = list[str]
 IRREGULAR_FORMS_T  = list[str]
 LABELS_AND_CODES_T = list[str] 
 REGIONS_T          = list[str]
-USAGES_T           = list[str]             
+USAGES_T           = list[str]              
 
 WORD_T = str
-POS_T = str
+POS_T = list[str]
 
-class POSData(TypedDict):
+class POSFields(TypedDict):
     UK_IPA:           list[UK_IPA_T]
     UK_audio_links:   list[UK_AUDIO_LINKS_T]
     US_IPA:           list[US_IPA_T]
@@ -42,7 +43,12 @@ class POSData(TypedDict):
     usages:           list[USAGES_T]
 
 
-RESULT_FORMAT = dict[WORD_T, dict[POS_T, POSData]]
+class POSData(TypedDict):
+    POS: list[str]
+    data: POSFields
+
+
+RESULT_FORMAT = dict[WORD_T, list[POSData]]
 
 class DictionaryVariation(IntEnum):
     English = 0
@@ -183,40 +189,44 @@ def update_word_dict(word_dict:        RESULT_FORMAT,
                      us_audio_links:   Optional[US_AUDIO_LINKS_T]  =None):
     
     word = word if word is not None else ""
-    pos = pos if pos is not None else ""
+    pos = pos if pos is not None else []
 
     if word_dict.get(word) is None:
-        word_dict[word] = {}
+        word_dict[word] = []
+    
+    if not word_dict[word] or word_dict[word][-1]["POS"] != pos:
+        word_dict[word].append({"POS": pos, 
+                                "data": { "definitions":      [],
+                                          "examples":         [],
+                                          "UK_IPA":           [],
+                                          "US_IPA":           [],
+                                          "UK_audio_links":   [],
+                                          "US_audio_links":   [],
+                                          "image_links":      [],
+                                          "alt_terms":        [],
+                                          "irregular_forms":  [],
+                                          "levels":           [],
+                                          "labels_and_codes": [],
+                                          "regions":          [],
+                                          "usages":           [],
+                                          "domains":          []
+                                          }})
 
-    if word_dict[word].get(pos) is None:
-        word_dict[word][pos] = {"definitions":      [],
-                                "examples":         [],
-                                "UK_IPA":           [],
-                                "US_IPA":           [],
-                                "UK_audio_links":   [],
-                                "US_audio_links":   [],
-                                "image_links":      [],
-                                "alt_terms":        [],
-                                "irregular_forms":  [],
-                                "levels":           [],
-                                "labels_and_codes": [],
-                                "regions":          [],
-                                "usages":           [],
-                                "domains":          []}
-    word_dict[word][pos]["definitions"]     .append(definition       if definition        is not None else "")
-    word_dict[word][pos]["levels"]          .append(level            if level             is not None else "")
-    word_dict[word][pos]["image_links"]     .append(image_link       if image_link        is not None else "")
-    word_dict[word][pos]["UK_IPA"]          .append(uk_ipa           if uk_ipa            is not None else [])
-    word_dict[word][pos]["US_IPA"]          .append(us_ipa           if us_ipa            is not None else [])
-    word_dict[word][pos]["UK_audio_links"]  .append(uk_audio_links   if uk_audio_links    is not None else [])
-    word_dict[word][pos]["US_audio_links"]  .append(us_audio_links   if us_audio_links    is not None else [])
-    word_dict[word][pos]["examples"]        .append(examples         if examples          is not None else [])
-    word_dict[word][pos]["alt_terms"]       .append(alt_terms        if alt_terms         is not None else [])
-    word_dict[word][pos]["irregular_forms"] .append(irregular_forms  if irregular_forms   is not None else [])
-    word_dict[word][pos]["labels_and_codes"].append(labels_and_codes if labels_and_codes  is not None else [])
-    word_dict[word][pos]["regions"]         .append(regions          if regions           is not None else [])
-    word_dict[word][pos]["usages"]          .append(usages           if usages            is not None else [])
-    word_dict[word][pos]["domains"]         .append(domains          if domains           is not None else [])
+    last_appended_data = word_dict[word][-1]["data"]
+    last_appended_data["definitions"]     .append(definition       if definition        is not None else "")
+    last_appended_data["levels"]          .append(level            if level             is not None else "")
+    last_appended_data["image_links"]     .append(image_link       if image_link        is not None else "")
+    last_appended_data["UK_IPA"]          .append(uk_ipa           if uk_ipa            is not None else [])
+    last_appended_data["US_IPA"]          .append(us_ipa           if us_ipa            is not None else [])
+    last_appended_data["UK_audio_links"]  .append(uk_audio_links   if uk_audio_links    is not None else [])
+    last_appended_data["US_audio_links"]  .append(us_audio_links   if us_audio_links    is not None else [])
+    last_appended_data["examples"]        .append(examples         if examples          is not None else [])
+    last_appended_data["alt_terms"]       .append(alt_terms        if alt_terms         is not None else [])
+    last_appended_data["irregular_forms"] .append(irregular_forms  if irregular_forms   is not None else [])
+    last_appended_data["labels_and_codes"].append(labels_and_codes if labels_and_codes  is not None else [])
+    last_appended_data["regions"]         .append(regions          if regions           is not None else [])
+    last_appended_data["usages"]          .append(usages           if usages            is not None else [])
+    last_appended_data["domains"]         .append(domains          if domains           is not None else [])
 
 def get_irregular_forms(word_header_block: Optional[bs4.Tag]) -> IRREGULAR_FORMS_T:
     forms: IRREGULAR_FORMS_T = []
@@ -287,8 +297,8 @@ def define(word: str,
         header_word = parsed_word_block.text.strip() if parsed_word_block is not None else ""
 
         pos_block = header_block.find_all("span", {"class": "pos dpos"}) if header_block is not None else []
-        pos = "" if not pos_block else ",".join((pos_section.text.strip() for pos_section in pos_block))
-        
+        pos = [pos_section.text.strip() for pos_section in pos_block]
+
         uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block, dictionary_index)
 
         # data gathered from the word header
@@ -384,4 +394,4 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("is", dictionary_index=DictionaryVariation.English, timeout=5.3))
+    pprint(define("bass", dictionary_index=DictionaryVariation.English, timeout=5.3))
