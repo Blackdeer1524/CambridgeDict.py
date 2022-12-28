@@ -126,11 +126,16 @@ def get_phonetics(
 
     if dictionary_index == DictionaryVariation.English:
         ipa = header_block.find_all("span", {"class": "pron dpron"})
+
+        prev_ipa_parrent: str = ""
         for child in ipa:
             ipa_parent = child.parent.get("class")
-            if ipa_parent is None:
-                continue
 
+            if ipa_parent is None:
+                ipa_parent = prev_ipa_parrent
+            else:
+                prev_ipa_parrent = ipa_parent
+                
             if "uk" in ipa_parent:
                 uk_ipa.append(child.text.strip())
             elif "us" in ipa_parent:
@@ -379,4 +384,4 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("reconnaissance", dictionary_index=DictionaryVariation.English, timeout=5.3))
+    pprint(define("is", dictionary_index=DictionaryVariation.English, timeout=5.3))
