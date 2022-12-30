@@ -44,7 +44,7 @@ class POSFields(TypedDict):
 
 
 class POSData(TypedDict):
-    POS: list[str]
+    POS:  POS_T
     data: POSFields
 
 
@@ -197,8 +197,8 @@ def update_word_dict(word_dict:        RESULT_FORMAT,
     def remove_blanks_from_list(src: list[str]) -> list[str]:
         return [remove_blanks_from_str(item) for item in src]
 
-    word = word if word is not None else ""
-    pos = pos if pos is not None else []
+    word = remove_blanks_from_str(word) if word is not None else ""
+    pos = remove_blanks_from_list(pos) if pos is not None else []
 
     if word_dict.get(word) is None:
         word_dict[word] = []
@@ -403,4 +403,4 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("p", dictionary_index=DictionaryVariation.English, timeout=5.3))
+    pprint(define("spire", dictionary_index=DictionaryVariation.English, timeout=5.3))
