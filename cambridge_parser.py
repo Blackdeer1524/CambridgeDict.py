@@ -1,6 +1,6 @@
 import bs4
 import requests
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Literal
 from enum import IntEnum, auto
 import re
 
@@ -8,39 +8,43 @@ import re
 DEFAULT_REQUESTS_HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
 LINK_PREFIX = "https://dictionary.cambridge.org"
 
-DEFINITION_T       = str
-IMAGE_LINK_T       = str
-LEVEL_T            = str
-UK_IPA_T           = list[str]
-UK_AUDIO_LINKS_T   = list[str]
-US_IPA_T           = list[str]
-US_AUDIO_LINKS_T   = list[str]
-ALT_TERMS_T        = list[str]
-DOMAINS_T          = list[str]
-EXAMPLES_T         = list[str]
-IRREGULAR_FORMS_T  = list[str]
-LABELS_AND_CODES_T = list[str] 
-REGIONS_T          = list[str]
-USAGES_T           = list[str]              
+DEFINITION_T             = str
+DEFINITION_TRANSLATION_T = str
+IMAGE_LINK_T             = str
+LEVEL_T                  = str
+UK_IPA_T                 = list[str]
+UK_AUDIO_LINKS_T         = list[str]
+US_IPA_T                 = list[str]
+US_AUDIO_LINKS_T         = list[str]
+ALT_TERMS_T              = list[str]
+DOMAINS_T                = list[str]
+EXAMPLES_T               = list[str]
+EXAMPLES_TRANSLATIONS_T  = list[str]
+IRREGULAR_FORMS_T        = list[str]
+LABELS_AND_CODES_T       = list[str] 
+REGIONS_T                = list[str]
+USAGES_T                 = list[str]              
 
 WORD_T = str
 POS_T = list[str]
 
 class POSFields(TypedDict):
-    UK_IPA:           list[UK_IPA_T]
-    UK_audio_links:   list[UK_AUDIO_LINKS_T]
-    US_IPA:           list[US_IPA_T]
-    US_audio_links:   list[US_AUDIO_LINKS_T]
-    alt_terms:        list[ALT_TERMS_T]
-    definitions:      list[DEFINITION_T]
-    domains:          list[DOMAINS_T]
-    examples:         list[EXAMPLES_T]
-    image_links:      list[IMAGE_LINK_T]
-    irregular_forms:  list[IRREGULAR_FORMS_T]
-    labels_and_codes: list[LABELS_AND_CODES_T]
-    levels:           list[LEVEL_T]
-    regions:          list[REGIONS_T]
-    usages:           list[USAGES_T]
+    UK_IPA:                   list[UK_IPA_T]
+    UK_audio_links:           list[UK_AUDIO_LINKS_T]
+    US_IPA:                   list[US_IPA_T]
+    US_audio_links:           list[US_AUDIO_LINKS_T]
+    alt_terms:                list[ALT_TERMS_T]
+    definitions:              list[DEFINITION_T]
+    definitions_translations: list[DEFINITION_TRANSLATION_T]
+    domains:                  list[DOMAINS_T]
+    examples:                 list[EXAMPLES_T]
+    examples_translations:    list[EXAMPLES_TRANSLATIONS_T]
+    image_links:              list[IMAGE_LINK_T]
+    irregular_forms:          list[IRREGULAR_FORMS_T]
+    labels_and_codes:         list[LABELS_AND_CODES_T]
+    levels:                   list[LEVEL_T]
+    regions:                  list[REGIONS_T]
+    usages:                   list[USAGES_T]
 
 
 class POSData(TypedDict):
@@ -50,8 +54,37 @@ class POSData(TypedDict):
 
 RESULT_FORMAT = dict[WORD_T, list[POSData]]
 
+
+BilingualVariations = Literal[
+    "",
+    "dutch",
+    "french",
+    "german",
+    "indonesian",
+    "italian",
+    "japanese",
+    "norwegian",
+    "polish",
+    "portuguese",
+    "spanish",
+    "arabic",
+    "catalan",
+    "chinese-simplified",
+    "chinese-traditional",
+    "czech",
+    "danish",
+    "korean",
+    "malay",
+    "russian",
+    "thai",
+    "turkish",
+    "ukrainian",
+    "vietnamese",
+]
+
+
 class DictionaryVariation(IntEnum):
-    English = 0
+    English  = 0
     American = auto()
     Business = auto()
 
@@ -173,23 +206,25 @@ def concatenate_tags(tag_section:             Optional[bs4.Tag],
 BLANKS_REMOVING_PATTERN = re.compile(r"(\s{2,})|(\r\n|\r|\n)+")
 
 
-def update_word_dict(word_dict:        RESULT_FORMAT,
-                     word:             Optional[WORD_T]            =None,
-                     pos:              Optional[POS_T]             =None,
-                     definition:       Optional[DEFINITION_T]      =None,
-                     alt_terms:        Optional[ALT_TERMS_T]       =None, 
-                     irregular_forms:  Optional[IRREGULAR_FORMS_T] =None,
-                     examples:         Optional[EXAMPLES_T]        =None,
-                     level:            Optional[LEVEL_T]           =None,
-                     labels_and_codes: Optional[LABELS_AND_CODES_T]=None,
-                     regions:          Optional[REGIONS_T]         =None,
-                     usages:           Optional[USAGES_T]          =None,
-                     domains:          Optional[DOMAINS_T]         =None,
-                     image_link:       Optional[IMAGE_LINK_T]      =None,
-                     uk_ipa:           Optional[UK_IPA_T]          =None,
-                     us_ipa:           Optional[US_IPA_T]          =None,
-                     uk_audio_links:   Optional[UK_AUDIO_LINKS_T]  =None,
-                     us_audio_links:   Optional[US_AUDIO_LINKS_T]  =None):
+def update_word_dict(word_dict:              RESULT_FORMAT,
+                     word:                   Optional[WORD_T]                   =None,
+                     pos:                    Optional[POS_T]                    =None,
+                     definition:             Optional[DEFINITION_T]             =None,
+                     definition_translation: Optional[DEFINITION_TRANSLATION_T] =None,
+                     alt_terms:              Optional[ALT_TERMS_T]              =None, 
+                     irregular_forms:        Optional[IRREGULAR_FORMS_T]        =None,
+                     examples:               Optional[EXAMPLES_T]               =None,
+                     examples_translations:  Optional[EXAMPLES_TRANSLATIONS_T] = None,
+                     level:                  Optional[LEVEL_T]                  =None,
+                     labels_and_codes:       Optional[LABELS_AND_CODES_T]       =None,
+                     regions:                Optional[REGIONS_T]                =None,
+                     usages:                 Optional[USAGES_T]                 =None,
+                     domains:                Optional[DOMAINS_T]                =None,
+                     image_link:             Optional[IMAGE_LINK_T]             =None,
+                     uk_ipa:                 Optional[UK_IPA_T]                 =None,
+                     us_ipa:                 Optional[US_IPA_T]                 =None,
+                     uk_audio_links:         Optional[UK_AUDIO_LINKS_T]         =None,
+                     us_audio_links:         Optional[US_AUDIO_LINKS_T]         =None):
     
     def remove_blanks_from_str(src: str) -> str:
         return re.sub(BLANKS_REMOVING_PATTERN, " ", src.strip())
@@ -205,37 +240,41 @@ def update_word_dict(word_dict:        RESULT_FORMAT,
     
     if not word_dict[word] or word_dict[word][-1]["POS"] != pos:
         word_dict[word].append({"POS": pos, 
-                                "data": { "definitions":      [],
-                                          "examples":         [],
-                                          "UK_IPA":           [],
-                                          "US_IPA":           [],
-                                          "UK_audio_links":   [],
-                                          "US_audio_links":   [],
-                                          "image_links":      [],
-                                          "alt_terms":        [],
-                                          "irregular_forms":  [],
-                                          "levels":           [],
-                                          "labels_and_codes": [],
-                                          "regions":          [],
-                                          "usages":           [],
-                                          "domains":          []
+                                "data": { "definitions":              [],
+                                          "definitions_translations": [],
+                                          "examples":                 [],
+                                          "examples_translations":    [],
+                                          "UK_IPA":                   [],
+                                          "US_IPA":                   [],
+                                          "UK_audio_links":           [],
+                                          "US_audio_links":           [],
+                                          "image_links":              [],
+                                          "alt_terms":                [],
+                                          "irregular_forms":          [],
+                                          "levels":                   [],
+                                          "labels_and_codes":         [],
+                                          "regions":                  [],
+                                          "usages":                   [],
+                                          "domains":                  []
                                           }})
 
     last_appended_data = word_dict[word][-1]["data"]
-    last_appended_data["definitions"]     .append(remove_blanks_from_str(definition.strip(": ")) if definition        is not None else "")
-    last_appended_data["levels"]          .append(remove_blanks_from_str(level)                  if level             is not None else "")
-    last_appended_data["image_links"]     .append(remove_blanks_from_str(image_link)             if image_link        is not None else "")
-    last_appended_data["UK_IPA"]          .append(remove_blanks_from_list(uk_ipa)                if uk_ipa            is not None else [])
-    last_appended_data["US_IPA"]          .append(remove_blanks_from_list(us_ipa)                if us_ipa            is not None else [])
-    last_appended_data["UK_audio_links"]  .append(remove_blanks_from_list(uk_audio_links)        if uk_audio_links    is not None else [])
-    last_appended_data["US_audio_links"]  .append(remove_blanks_from_list(us_audio_links)        if us_audio_links    is not None else [])
-    last_appended_data["examples"]        .append(remove_blanks_from_list(examples)              if examples          is not None else [])
-    last_appended_data["alt_terms"]       .append(remove_blanks_from_list(alt_terms)             if alt_terms         is not None else [])
-    last_appended_data["irregular_forms"] .append(remove_blanks_from_list(irregular_forms)       if irregular_forms   is not None else [])
-    last_appended_data["labels_and_codes"].append(remove_blanks_from_list(labels_and_codes)      if labels_and_codes  is not None else [])
-    last_appended_data["regions"]         .append(remove_blanks_from_list(regions)               if regions           is not None else [])
-    last_appended_data["usages"]          .append(remove_blanks_from_list(usages)                if usages            is not None else [])
-    last_appended_data["domains"]         .append(remove_blanks_from_list(domains)               if domains           is not None else [])
+    last_appended_data["definitions"]             .append(remove_blanks_from_str(definition.strip(": ")) if definition             is not None else "")
+    last_appended_data["definitions_translations"].append(remove_blanks_from_str(definition_translation) if definition_translation is not None else "")
+    last_appended_data["levels"]                  .append(remove_blanks_from_str(level)                  if level                  is not None else "")
+    last_appended_data["image_links"]             .append(remove_blanks_from_str(image_link)             if image_link             is not None else "")
+    last_appended_data["UK_IPA"]                  .append(remove_blanks_from_list(uk_ipa)                if uk_ipa                 is not None else [])
+    last_appended_data["US_IPA"]                  .append(remove_blanks_from_list(us_ipa)                if us_ipa                 is not None else [])
+    last_appended_data["UK_audio_links"]          .append(remove_blanks_from_list(uk_audio_links)        if uk_audio_links         is not None else [])
+    last_appended_data["US_audio_links"]          .append(remove_blanks_from_list(us_audio_links)        if us_audio_links         is not None else [])
+    last_appended_data["examples"]                .append(remove_blanks_from_list(examples)              if examples               is not None else [])
+    last_appended_data["examples_translations"]   .append(remove_blanks_from_list(examples_translations) if examples_translations  is not None else [])
+    last_appended_data["alt_terms"]               .append(remove_blanks_from_list(alt_terms)             if alt_terms              is not None else [])
+    last_appended_data["irregular_forms"]         .append(remove_blanks_from_list(irregular_forms)       if irregular_forms        is not None else [])
+    last_appended_data["labels_and_codes"]        .append(remove_blanks_from_list(labels_and_codes)      if labels_and_codes       is not None else [])
+    last_appended_data["regions"]                 .append(remove_blanks_from_list(regions)               if regions                is not None else [])
+    last_appended_data["usages"]                  .append(remove_blanks_from_list(usages)                if usages                 is not None else [])
+    last_appended_data["domains"]                 .append(remove_blanks_from_list(domains)               if domains                is not None else [])
                                     
 def get_irregular_forms(word_header_block: Optional[bs4.Tag]) -> IRREGULAR_FORMS_T:
     forms: IRREGULAR_FORMS_T = []
@@ -271,12 +310,55 @@ def get_alt_terms(word_header_block: Optional[bs4.Tag]) -> ALT_TERMS_T:
 
 def define(word: str, 
            dictionary_index: DictionaryVariation=DictionaryVariation.English, 
-           request_headers: Optional[dict]=None, 
+           bilingual_vairation: BilingualVariations = "",
+           request_headers: Optional[dict]=None,  
            timeout:float=5.0) -> RESULT_FORMAT:
+    """
+    dictionary_index: DictionaryVariation
+    |  Ignored if bilingual_vairation != "" 
+    |  One of three available english dictionaries:
+    |     * English
+    |     * American
+    |     * Business
+    |
+    bilingual_vairation: str
+    |   Type of bilingual dictionary. Empty string specifies monolingual dictionary. 
+    |   Note:
+    |       List of available bilingual dictionaries ("BilingualVariations" type) can be easily modified if needed by adding a lowercase "-"-separated name of adding dictionary to it.
+    |       Example: English-Russian bilingual -> russian; English-Chinese (Traditional) -> chinese-traditional
+    |   Available types:
+    |       "dutch"
+    |       "french"
+    |       "german"
+    |       "indonesian"
+    |       "italian"
+    |       "japanese"
+    |       "norwegian"
+    |       "polish"
+    |       "portuguese"
+    |       "spanish"
+    |       "arabic"
+    |       "catalan"
+    |       "chinese-simplified"
+    |       "chinese-traditional"
+    |       "czech"
+    |       "danish"
+    |       "korean"
+    |       "malay"
+    |       "russian"
+    |       "thai"
+    |       "turkish"
+    |       "ukrainian"
+    |       "vietnamese"
+    """
     if request_headers is None:
         request_headers = DEFAULT_REQUESTS_HEADERS
-
-    link = f"{LINK_PREFIX}/dictionary/english/{word}"
+    
+    if bilingual_vairation:
+        link = f"{LINK_PREFIX}/dictionary/english-{bilingual_vairation}/{word}"
+        dictionary_index = DictionaryVariation.English
+    else:
+        link = f"{LINK_PREFIX}/dictionary/english/{word}"
     # will raise error if request_headers are None
     page = requests.get(link, headers=request_headers, timeout=timeout)
 
@@ -331,6 +413,9 @@ def define(word: str,
 
             current_def_block_word = header_word
 
+            definition_translation_block = def_and_sent_block.find("span", {"class": "trans dtrans dtrans-se"})
+            definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
+
             image_section = def_and_sent_block.find("div", {"class": "dimg"})
             image_link = ""
             if image_section is not None:
@@ -344,9 +429,12 @@ def define(word: str,
                 "div",
                 {"class": "examp dexamp"})
             examples = []
+            examples_translations = []
             for item in sentence_block_list:
-                sent_ex = item.text
-                examples.append(sent_ex)
+                sent_ex = item.find("span", {"class": "eg deg"})
+                sent_translation = item.find("span", {"class": "trans dtrans dtrans-se hdb break-cj"})
+                examples.append(sent_ex.text if sent_ex is not None else "")
+                examples_translations.append(sent_translation.text if sent_translation is not None else "")
 
             found_definition_block = def_and_sent_block.find("div", {"class": "ddef_h"})
 
@@ -389,10 +477,12 @@ def define(word: str,
             update_word_dict(word_info,
                              word=current_def_block_word,
                              pos=pos,
+                             definition_translation=definition_translation,
                              definition=definition,
                              alt_terms=pos_alt_terms_list + alt_terms,
                              irregular_forms=irregular_forms + pos_irregular_forms_list,
                              examples=examples,
+                             examples_translations=examples_translations,
                              level=current_word_level,
                              labels_and_codes=current_word_labels_and_codes,
                              regions=current_word_regions,
@@ -409,4 +499,7 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("spire", dictionary_index=DictionaryVariation.English, timeout=5.3))
+    pprint(define("test", 
+                  dictionary_index=DictionaryVariation.American, 
+                  bilingual_vairation="russian",
+                  timeout=5.3))
