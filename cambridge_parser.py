@@ -306,8 +306,14 @@ def define(word: str,
         header_word = parsed_word_block.text if parsed_word_block is not None else ""
 
         pos_block = header_block.find_all("span", {"class": "pos dpos"}) if header_block is not None else []
-        pos = [pos_section.text for pos_section in pos_block]
-
+        pos = [] 
+        i = 0
+        while i < len(pos_block):
+            i_pos = pos_block[i].text
+            pos.append(i_pos)
+            if i_pos == "phrasal verb":  # after "phrasal verb" goes verb that was 
+                i += 1                   # used in a construction of this phrasal verb. We skip it.
+            i += 1
         uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block, dictionary_index)
 
         # data gathered from the word header
