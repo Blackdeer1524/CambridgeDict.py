@@ -413,9 +413,6 @@ def define(word: str,
 
             current_def_block_word = header_word
 
-            definition_translation_block = def_and_sent_block.find("span", {"class": "trans dtrans dtrans-se"})
-            definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
-
             image_section = def_and_sent_block.find("div", {"class": "dimg"})
             image_link = ""
             if image_section is not None:
@@ -425,6 +422,10 @@ def define(word: str,
 
             # sentence examples
             sentence_block_list = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
+            definition_translation_block = sentence_block_list.find(
+                lambda tag: tag.name == "span" and any(class_attr == "trans" for class_attr in tag.attrs.get("class", [""]))) 
+            definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
+
             sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
                 "div",
                 {"class": "examp dexamp"})
@@ -499,7 +500,6 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define("test", 
-                  dictionary_index=DictionaryVariation.American, 
-                  bilingual_vairation="russian",
-                  timeout=5.3))
+    pprint(define(word="bass", 
+                  dictionary_index=DictionaryVariation.English, 
+                  bilingual_vairation="chinese-simplified"))
