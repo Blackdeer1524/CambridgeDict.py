@@ -421,17 +421,18 @@ def define(word: str,
                     image_link = LINK_PREFIX + image_link_block.get("src", "")
 
             # sentence examples
-            sentence_block_list = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
-            definition_translation_block = sentence_block_list.find(
-                lambda tag: tag.name == "span" and any(class_attr == "trans" for class_attr in tag.attrs.get("class", [""]))) 
-            definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
+            sentences_and_translation_block = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
+            definition_translation = ""
+            sentence_blocks = []
+            if sentences_and_translation_block is not None:
+                definition_translation_block = sentences_and_translation_block.find(
+                    lambda tag: tag.name == "span" and any(class_attr == "trans" for class_attr in tag.attrs.get("class", [""]))) 
+                definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
+                sentence_blocks = sentences_and_translation_block.find_all("div", {"class": "examp dexamp"})
 
-            sentence_block_list = [] if sentence_block_list is None else sentence_block_list.find_all(
-                "div",
-                {"class": "examp dexamp"})
             examples = []
             examples_translations = []
-            for item in sentence_block_list:
+            for item in sentence_blocks:
                 sent_ex = item.find("span", {"class": "eg deg"})
                 sent_translation = item.find("span", {"class": "trans dtrans dtrans-se hdb break-cj"})
                 examples.append(sent_ex.text if sent_ex is not None else "")
@@ -500,6 +501,6 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    pprint(define(word="bass", 
+    pprint(define(word="endowing", 
                   dictionary_index=DictionaryVariation.English, 
-                  bilingual_vairation="chinese-simplified"))
+                  bilingual_vairation=""))
