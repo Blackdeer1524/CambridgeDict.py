@@ -83,11 +83,6 @@ BilingualVariations = Literal[
 ]
 
 
-class DictionaryVariation(IntEnum):
-    English  = 0
-    American = auto()
-    Business = auto()
-
 def get_tags(tags_section: Optional[bs4.Tag]) -> tuple[LEVEL_T, 
                                                        LABELS_AND_CODES_T, 
                                                        REGIONS_T, 
@@ -360,10 +355,6 @@ def define(word: str,
 
         for entity in main_block:
             header_block = entity.find("div", {"class": "dpos-h"})
-            # if header_block is None:
-            #     header_block = entity.find("div", {"class": "pos-header dpos-h"})
-            # if header_block is None:
-            #     header_block = entity.find("div", {"class": "dpos-h di-head normal-entry"})
             pos_alt_terms_list = get_alt_terms(header_block)
             pos_irregular_forms_list = get_irregular_forms(header_block)
 
@@ -372,8 +363,6 @@ def define(word: str,
                 parsed_word_block = header_block.find("h2", {"class": "di-title"}) if header_block is not None else None
             if parsed_word_block is None:
                 parsed_word_block = header_block.find("div", {"class": "di-title"}) if header_block is not None else None
-            # if parsed_word_block is None:
-            #     parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
             header_word = parsed_word_block.text if parsed_word_block is not None else ""
 
             pos_block = header_block.find_all("span", {"class": "pos dpos"}) if header_block is not None else []
@@ -484,7 +473,6 @@ if __name__ == "__main__":
     from pprint import pprint
 
     res = define(word="bass", 
-                  bilingual_vairation="")
-    print(len(res))
+                  bilingual_vairation="chinese-traditional")
     pprint(res)
 
