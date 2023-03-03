@@ -135,8 +135,7 @@ def get_tags(tags_section: Optional[bs4.Tag]) -> tuple[LEVEL_T,
     return level, labels_and_codes, region, usage, domain
 
 def get_phonetics(
-    header_block: Optional[bs4.Tag], 
-    dictionary_index: DictionaryVariation) -> tuple[UK_IPA_T, 
+    header_block: Optional[bs4.Tag]) -> tuple[UK_IPA_T, 
                                                     US_IPA_T, 
                                                     UK_AUDIO_LINKS_T, 
                                                     US_AUDIO_LINKS_T]:
@@ -163,7 +162,6 @@ def get_phonetics(
         elif "us" in parent_class:
             us_audio_links.append(result_audio_link)
 
-    # if dictionary_index == DictionaryVariation.English:
     ipa = header_block.find_all("span", {"class": "pron dpron"})
 
     prev_ipa_parrent: str = ""
@@ -177,13 +175,8 @@ def get_phonetics(
 
         if "uk" in ipa_parent:
             uk_ipa.append(child.text)
-        elif "us" in ipa_parent:
+        else:
             us_ipa.append(child.text)
-    # else:
-    #     # Cambridge has different ways of adding IPA to american and english dictionaries
-    #     uk_ipa = []
-    #     us_ipa_block = header_block.find("span", {"class": "pron dpron"})
-    #     us_ipa = [us_ipa_block.text] if us_ipa_block is not None else []
     return uk_ipa, us_ipa, uk_audio_links, us_audio_links
 
 
@@ -360,20 +353,27 @@ def define(word: str,
     res: list[RESULT_FORMAT] = []
     for dictionary_index in range(len(primal_block)):
         word_info: RESULT_FORMAT = {}
-        main_block = primal_block[dictionary_index].find_all("div", {"class": lambda x: "entry-body" in x if x is not None else False})
+        main_block = primal_block[dictionary_index].find_all("div", {"class": lambda x: "entry-body__el" in x if x is not None else False})
+        main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pr dictionary"}))
         main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pv-block"}))
         main_block.extend(primal_block[dictionary_index].find_all("div", {"class": "pr idiom-block"}))
 
         for entity in main_block:
-            header_block = entity.find("span", {"class": "di-info"})
-            if header_block is None:
-                header_block = entity.find("div", {"class": "pos-header dpos-h"})
+            header_block = entity.find("div", {"class": "dpos-h"})
+            # if header_block is None:
+            #     header_block = entity.find("div", {"class": "pos-header dpos-h"})
+            # if header_block is None:
+            #     header_block = entity.find("div", {"class": "dpos-h di-head normal-entry"})
             pos_alt_terms_list = get_alt_terms(header_block)
             pos_irregular_forms_list = get_irregular_forms(header_block)
 
             parsed_word_block = entity.find("h2", {"class": "headword"})
             if parsed_word_block is None:
-                parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
+                parsed_word_block = header_block.find("h2", {"class": "di-title"}) if header_block is not None else None
+            if parsed_word_block is None:
+                parsed_word_block = header_block.find("div", {"class": "di-title"}) if header_block is not None else None
+            # if parsed_word_block is None:
+            #     parsed_word_block = header_block.find("span", {"class": "hw dhw"}) if header_block is not None else None
             header_word = parsed_word_block.text if parsed_word_block is not None else ""
 
             pos_block = header_block.find_all("span", {"class": "pos dpos"}) if header_block is not None else []
@@ -385,7 +385,7 @@ def define(word: str,
                 if i_pos == "phrasal verb":  # after "phrasal verb" goes verb that was 
                     i += 1                   # used in a construction of this phrasal verb. We skip it.
                 i += 1
-            uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block, dictionary_index)
+            uk_ipa, us_ipa, uk_audio_links, us_audio_links = get_phonetics(header_block)
 
             # data gathered from the word header
             pos_level, pos_labels_and_codes, pos_regions, pos_usages, pos_domains = get_tags(header_block)
@@ -410,20 +410,20 @@ def define(word: str,
                         image_link = LINK_PREFIX + image_link_block.get("src", "")
 
                 # sentence examples
-                sentences_and_translation_block = def_and_sent_block.find("div", {"class": "def-body ddef_b"})
+                sentences_and_translation_block = def_and_sent_block.find("div", {"class": "def-body"})
                 definition_translation = ""
                 sentence_blocks = []
                 if sentences_and_translation_block is not None:
                     definition_translation_block = sentences_and_translation_block.find(
-                        lambda tag: tag.name == "span" and any(class_attr == "trans" for class_attr in tag.attrs.get("class", [""]))) 
+                        lambda tag: tag.name == "span" and any(class_attr == "trans" for class_attr in tag.attrs.get("class", []))) 
                     definition_translation = definition_translation_block.text if definition_translation_block is not None else ""
                     sentence_blocks = sentences_and_translation_block.find_all("div", {"class": "examp dexamp"})
 
                 examples = []
                 examples_translations = []
                 for item in sentence_blocks:
-                    sent_ex = item.find("span", {"class": "eg deg"})
-                    sent_translation = item.find("span", {"class": "trans dtrans dtrans-se hdb break-cj"})
+                    sent_ex = item.find("span", {"class": "eg"})
+                    sent_translation = item.find("span", {"class": "trans"})
                     examples.append(sent_ex.text if sent_ex is not None else "")
                     examples_translations.append(sent_translation.text if sent_translation is not None else "")
 
@@ -434,23 +434,16 @@ def define(word: str,
                     definition = "" if found_definition_string is None else found_definition_string.text
 
                     # Gathering specific tags for every word usage
-                    tag_section = found_definition_block.find("span", {"class": "def-info ddef-info"})
+                    tag_section = found_definition_block.find("span", {"class": "def-info"})
                     current_word_level, current_word_labels_and_codes, current_word_regions, current_word_usages, current_word_domains = \
                         concatenate_tags(tag_section, pos_level, pos_labels_and_codes, pos_regions, pos_usages, pos_domains)
 
                     alt_terms = get_alt_terms(found_definition_block)
                     irregular_forms = get_irregular_forms(found_definition_block)
 
-                    # Phrase-block check
-                    # The reason for this is that on website there are two different tags for phrase-blocks
-                    phrase_block = found_definition_block.find_parent("div",
-                                                                    {"class": "pr phrase-block dphrase-block"})
-                    if phrase_block is None:
-                        phrase_block = found_definition_block.find_parent("div",
-                                                                        {"class": "pr phrase-block dphrase-block lmb-25"})
+                    phrase_block = found_definition_block.find_parent("div", {"class": "phrase-block"})
                     if phrase_block is not None:
-                        phrase_tags_section = phrase_block.find("span",
-                                                                {"class": "phrase-info dphrase-info"})
+                        phrase_tags_section = phrase_block.find("span", {"class": "phrase-info"})
                         if phrase_tags_section is not None:
                             alt_terms += get_alt_terms(phrase_tags_section)
                             irregular_forms += get_irregular_forms(phrase_tags_section)
@@ -462,8 +455,7 @@ def define(word: str,
                                                 current_word_regions,
                                                 current_word_usages,
                                                 current_word_domains)
-                        current_def_block_word = phrase_block.find("span",
-                                                                {"class": "phrase-title dphrase-title"}).text
+                        current_def_block_word = phrase_block.find("span", {"class": "phrase-title"}).text
 
                 update_word_dict(word_info,
                                 word=current_def_block_word,
@@ -491,6 +483,8 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    res = define(word="make", 
-                  bilingual_vairation="polish")
-    pprint(res[1])
+    res = define(word="bass", 
+                  bilingual_vairation="")
+    print(len(res))
+    pprint(res)
+
