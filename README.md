@@ -82,7 +82,6 @@ Note: length of the result is not predetermined as there may not be Intermidiate
 
 ```python
 define(word="more", 
-       dictionary_index=DictionaryVariation.English, 
        bilingual_vairation="")
 [
 {'more': [{'POS': ['determiner', 'pronoun', 'adverb'],
