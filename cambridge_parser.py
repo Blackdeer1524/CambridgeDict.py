@@ -344,7 +344,7 @@ def define(word: str,
     soup = bs4.BeautifulSoup(page.content, "html.parser")
     # Only english dictionary
     # word block which contains definitions for every POS_T.
-    primal_block = soup.find_all("div", {'class': 'entry-body'})
+    primal_block = soup.find_all("div", {'class': 'di-body'})
     res: list[RESULT_FORMAT] = []
     for dictionary_index in range(len(primal_block)):
         word_info: RESULT_FORMAT = {}
@@ -473,6 +473,6 @@ if __name__ == "__main__":
     from pprint import pprint
 
     res = define(word="bass", 
-                  bilingual_vairation="chinese-traditional")
+                  bilingual_vairation="")
     pprint(res)
 

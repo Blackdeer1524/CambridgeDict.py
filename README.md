@@ -83,8 +83,7 @@ Note: length of the result is not predetermined as there may not be Intermidiate
 ```python
 define(word="more", 
        bilingual_vairation="")
-[
-{'more': [{'POS': ['determiner', 'pronoun', 'adverb'],
+[{'more': [{'POS': ['determiner', 'pronoun', 'adverb'],
             'data': {'UK_IPA': [['/mɔːr/'], ['/mɔːr/'], ['/mɔːr/']],
                      'UK_audio_links': [['https://dictionary.cambridge.org//media/english/uk_pron/u/ukm/ukmor/ukmorda003.mp3'],
                                         ['https://dictionary.cambridge.org//media/english/uk_pron/u/ukm/ukmor/ukmorda003.mp3'],
@@ -212,8 +211,7 @@ define(word="more",
                      'labels_and_codes': [[], []],
                      'levels': ['', ''],
                      'regions': [[], []],
-                     'usages': [[], []]}}]}
-]
+                     'usages': [[], []]}}]}]
 
 define(word="bass", 
        bilingual_vairation="chinese-traditional")
@@ -278,8 +276,8 @@ define(word="bass",
                      'labels_and_codes': [['[ before noun ]']],
                      'levels': [''],
                      'regions': [[]],
-                     'usages': [[]]}}]},
- {'bass': [{'POS': ['noun'],
+                     'usages': [[]]}},
+           {'POS': ['noun'],
             'data': {'UK_IPA': [['/bæs/']],
                      'UK_audio_links': [['https://dictionary.cambridge.org//media/english-chinese-traditional/uk_pron/u/ukb/ukbas/ukbashf020.mp3']],
                      'US_IPA': [['/bæs/']],
@@ -296,6 +294,5 @@ define(word="bass",
                      'labels_and_codes': [['[ C ]']],
                      'levels': [''],
                      'regions': [[]],
-                     'usages': [[]]}}]}
-]
+                     'usages': [[]]}}]}]
 ```
