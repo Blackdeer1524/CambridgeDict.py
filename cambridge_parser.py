@@ -55,6 +55,14 @@ class POSData(TypedDict):
 RESULT_FORMAT = dict[WORD_T, list[POSData]]
 
 
+DictionaryType = Literal[
+    "english",
+    "learner-english",
+    "essential-british-english",
+    "essential-american-english"
+]
+
+
 BilingualVariations = Literal[
     "",
     "dutch",
@@ -297,15 +305,34 @@ def get_alt_terms(word_header_block: Optional[bs4.Tag]) -> ALT_TERMS_T:
 
 
 def define(word: str, 
+           dictionary_type: DictionaryType = "english",
            bilingual_vairation: BilingualVariations = "",
            request_headers: Optional[dict]=None,  
            timeout:float=5.0) -> list[RESULT_FORMAT]:
     """
-    bilingual_vairation: str
+    dictionary_type: Literal
+    |   Type of monolingual english dictionary.
+    |   Note:
+    |       dictionary_type WILL NOT be considered if bilingual_variation is set to
+    |       non-empty string
+    |   Available types:
+    |       "english",
+    |       "learner-english"
+    |       "essential-british-english",
+    |       "essential-american-english"
+
+    bilingual_vairation: Literal
     |   Type of bilingual dictionary. Empty string specifies monolingual dictionary. 
     |   Note:
-    |       List of available bilingual dictionaries ("BilingualVariations" type) can be easily modified if needed by adding a lowercase "-"-separated name of adding dictionary to it.
-    |       Example: English-Russian bilingual -> russian; English-Chinese (Traditional) -> chinese-traditional
+    |       dictionary_type WILL NOT be considered if bilingual_variation is set to
+    |       non-empty string
+    |
+    |       List of available bilingual dictionaries ("BilingualVariations" type) 
+    |       can be easily modified if needed by adding a lowercase "-"-separated name of 
+    |       adding dictionary to it.
+    |       Example: 
+    |           English-Russian bilingual -> russian; 
+    |           English-Chinese (Traditional) -> chinese-traditional
     |   Available types:
     |       "dutch"
     |       "french"
@@ -337,7 +364,7 @@ def define(word: str,
     if bilingual_vairation:
         link = f"{LINK_PREFIX}/dictionary/english-{bilingual_vairation}/{word}"
     else:
-        link = f"{LINK_PREFIX}/dictionary/english/{word}"
+        link = f"{LINK_PREFIX}/dictionary/{dictionary_type}/{word}"
     # will raise error if request_headers are None
     page = requests.get(link, headers=request_headers, timeout=timeout)
 
@@ -472,7 +499,8 @@ def define(word: str,
 if __name__ == "__main__":
     from pprint import pprint
 
-    res = define(word="bass", 
-                  bilingual_vairation="")
+    res = define(word="test", 
+                 dictionary_type="learner-english",
+                 bilingual_vairation="")
     pprint(res)
 
