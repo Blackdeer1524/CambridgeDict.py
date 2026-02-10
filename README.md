@@ -82,7 +82,7 @@ Note: length of the result is not predetermined as there may not be Intermidiate
 
 ```python
 define(word="more", 
-       bilingual_vairation="")
+       bilingual_variation="")
 [{'more': [{'POS': ['determiner', 'pronoun', 'adverb'],
             'data': {'UK_IPA': [['/mɔːr/'], ['/mɔːr/'], ['/mɔːr/']],
                      'UK_audio_links': [['https://dictionary.cambridge.org//media/english/uk_pron/u/ukm/ukmor/ukmorda003.mp3'],
@@ -214,7 +214,7 @@ define(word="more",
                      'usages': [[], []]}}]}]
 
 define(word="bass", 
-       bilingual_vairation="chinese-traditional")
+       bilingual_variation="chinese-traditional")
 [{'bass': [{'POS': ['noun'],
             'data': {'UK_IPA': [['/beɪs/'], ['/beɪs/'], ['/beɪs/'], ['/beɪs/']],
                      'UK_audio_links': [['https://dictionary.cambridge.org//media/english-chinese-traditional/uk_pron/u/ukb/ukbar/ukbaroq020.mp3'],
